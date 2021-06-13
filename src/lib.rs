@@ -204,6 +204,18 @@ impl<T> ManuallyDrop<T> {
 	pub fn is_maybe_next_panic(&self) -> bool {
 		!self.state.is_def_mode()
 	}
+	
+	#[inline(always)]
+	pub unsafe fn ignore_drop(&self) {
+		#[cfg(debug_assertions)] {
+			self.state.to_ignore_panic_when_drop();
+		}
+	}
+	
+	#[inline(always)]
+	fn __get_state_and_value<F: FnOnce(&mut Box<UnsafeManuallyDrop<T>>, &StateManuallyDrop) -> R, R>(&mut self, next: F) -> R {
+		next(&mut self.value, &self.state)
+	}
 }
 
 impl<T> ManuallyDrop<T> where T: ?Sized {
@@ -245,5 +257,20 @@ impl<T> DerefMut for ManuallyDrop<T> where T: ?Sized {
 		}
 		
 		&mut self.value
+	}
+}
+
+#[cfg(debug_assertions)]
+impl<T> Drop for ManuallyDrop<T> where T: ?Sized {
+	fn drop(&mut self) {
+		let ref mut value = self.value;
+		let ref state = self.state;
+		
+		// What for? - >> to ignore miri errors allocate.
+		state.exp_nodef_state(
+			|| unsafe {
+				UnsafeManuallyDrop::drop(value);
+			}
+		);
 	}
 }

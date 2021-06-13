@@ -18,6 +18,8 @@ pub enum StateManuallyDropData {
 	TakeMode,
 	DropMode,
 	IntoInnerMode,
+	
+	IgnorePanicWhenDrop,
 }
 
 impl Default for StateManuallyDropData {
@@ -112,6 +114,15 @@ impl StateManuallyDrop {
 		);
 	}
 	
+	pub fn to_ignore_panic_when_drop(&self) {
+		let mut write = self.__write();
+		
+		self.__safe_replace_mutstate(
+			&mut write,
+			|write| *write = StateManuallyDropData::IgnorePanicWhenDrop
+		);
+	}
+	
 	pub fn to_intoinnermode_or_panic(&self) {
 		let mut write = self.__write();
 		
@@ -131,11 +142,31 @@ impl StateManuallyDrop {
 				drop(read);
 				
 				crate::undef_beh_nextpanic!(
-					"SafeManuallyDrop, undef_beh, {:?} != {:?}", 
+					"SafeManuallyDrop, undef_beh (deref), {:?} != {:?}", 
 					StateManuallyDropData::default(), 
 					astate
 				)
 			}
+		);
+	}
+	
+	pub fn exp_nodef_state<F: FnOnce()>(&self, fn_panic: F) {
+		let read = self.__read();
+		
+		read.def_state_fn(
+			|read| {
+				let astate: StateManuallyDropData = read.clone();
+				drop(read);
+				
+				fn_panic();
+				
+				crate::undef_beh_nextpanic!(
+					"SafeManuallyDrop, undef_beh (exp_nodef_state), {:?} == {:?}",
+					StateManuallyDropData::default(), 
+					astate
+				)
+			},
+			|_read| {}
 		);
 	}
 }

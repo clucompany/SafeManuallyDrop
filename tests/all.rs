@@ -15,7 +15,7 @@ mod panic_test_methods {
 	use SafeManuallyDrop::ManuallyDrop;
 	use core::ops::Deref;
 	use super::build_new_test_vec;
-	
+	use std::ops::DerefMut;
 	
 	/// PANIC METHOD #1
 	/// 1. COMBO DROP
@@ -116,6 +116,60 @@ mod panic_test_methods {
 		// <<-- PANIC
 		let _data = ManuallyDrop::into_inner(control_drop);
 	}
+	
+	/// PANIC METHOD #5
+	/// 1. AutoPanic when drop
+	#[inline(never)]
+	pub (crate) fn test_expmanualdrop(data: Vec<String>) {
+		let control_drop = ManuallyDrop::new(data);
+		
+		// <<-- PANIC
+		drop(control_drop);
+	}
+	
+	// IGNORE PANIC
+	#[inline(never)]
+	pub (crate) fn test_expmanualdrop2_ignorepanic(data: Vec<String>) {
+		let mut control_drop = ManuallyDrop::new(data);
+		
+		unsafe {
+			ManuallyDrop::drop(&mut control_drop);
+		}
+		//
+		drop(control_drop);
+	}
+	
+	// IGNORE PANIC
+	#[inline(never)]
+	pub (crate) fn test_expmanualdrop3_ignorepanic(data: Vec<String>) {
+		let mut control_drop = ManuallyDrop::new(data);
+		
+		let data = unsafe {
+			ManuallyDrop::take(&mut control_drop)
+		};
+		//
+		drop(control_drop);
+		drop(data);
+	}
+	
+	// IGNORE PANIC
+	#[inline(never)]
+	pub (crate) fn test_expmanualdrop4_ignorepanic(data: Vec<String>) {
+		let mut control_drop = ManuallyDrop::new(data);
+		
+		let ptr_data: *mut _ = control_drop.deref_mut();
+		unsafe {
+			// Leak:)
+			control_drop.ignore_drop();
+		}
+		{
+			// Ignore Leak when test
+			let data = unsafe {
+				std::ptr::read(ptr_data)
+			};
+			drop(data);
+		}
+	}
 }
 
 #[test]
@@ -135,24 +189,30 @@ fn test_panic_mode() {
 	
 	// Start test panic methods
 	// START POS
-	let arr_fn: &[&'static fn(a: Vec<String>)] = &[
-		(&(panic_test_methods::test_combo_drop as fn(a: Vec<String>))) as _,
-		(&(panic_test_methods::test_drop_and_read as fn(a: Vec<String>))) as _,
-		(&(panic_test_methods::test_take_and_read as fn(a: Vec<String>))) as _,
-		(&(panic_test_methods::test_take_and_drop as fn(a: Vec<String>))) as _,
-		(&(panic_test_methods::test_drop_and_into_inner as fn(a: Vec<String>))) as _,
+	let c_ignore_panic = 3;
+	let arr_fn: &[(bool, &'static fn(a: Vec<String>))] = &[
+		(true, (&(panic_test_methods::test_combo_drop as fn(a: Vec<String>))) as _),
+		(true, (&(panic_test_methods::test_drop_and_read as fn(a: Vec<String>))) as _),
+		(true, (&(panic_test_methods::test_take_and_read as fn(a: Vec<String>))) as _),
+		(true, (&(panic_test_methods::test_take_and_drop as fn(a: Vec<String>))) as _),
+		(true, (&(panic_test_methods::test_drop_and_into_inner as fn(a: Vec<String>))) as _),
+		(true, (&(panic_test_methods::test_expmanualdrop as fn(a: Vec<String>))) as _),
+		
+		(false, (&(panic_test_methods::test_expmanualdrop2_ignorepanic as fn(a: Vec<String>))) as _),
+		(false, (&(panic_test_methods::test_expmanualdrop3_ignorepanic as fn(a: Vec<String>))) as _),
+		(false, (&(panic_test_methods::test_expmanualdrop4_ignorepanic as fn(a: Vec<String>))) as _),
 	];
 	
-	for a in arr_fn.iter() {
+	for (is_err, function) in arr_fn.iter() {
 		let e = std::thread::spawn(move || {
-			let a = a;
-			a(build_new_test_vec());
+			let function = function;
+			function(build_new_test_vec());
 			
 		}).join();
-		assert_eq!(e.is_err(), true);
+		assert_eq!(&e.is_err(), is_err);
 	}
 	
 	std::panic::set_hook(Box::new(|_| {}));
-	assert_eq!(unsafe {PANIC_COUNTER}, arr_fn.len());
+	assert_eq!(unsafe {PANIC_COUNTER}, arr_fn.len() - c_ignore_panic);
 }
 
