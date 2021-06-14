@@ -1,5 +1,7 @@
 
 
+use SafeManuallyDrop::ManuallyDrop;
+
 /// Build test data
 #[inline(never)]
 fn build_new_test_vec() -> Vec<String> {
@@ -216,3 +218,22 @@ fn test_panic_mode() {
 	assert_eq!(unsafe {PANIC_COUNTER}, arr_fn.len() - c_ignore_panic);
 }
 
+
+
+#[test]
+fn test_thread_drop() {
+	let a = ManuallyDrop::new(vec![1]);
+	
+	let is_ok = std::thread::spawn(move || {
+		let mut a = a;
+		unsafe {
+			ManuallyDrop::drop(&mut a);
+		}
+		
+		true
+	}).join();
+	
+	assert_eq!(is_ok.is_ok(), true);
+	let ok = is_ok.unwrap();
+	assert_eq!(ok, true);
+}

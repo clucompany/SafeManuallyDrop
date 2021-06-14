@@ -267,7 +267,7 @@ impl<T> Drop for ManuallyDrop<T> where T: ?Sized {
 		let ref state = self.state;
 		
 		// What for? - >> to ignore miri errors allocate.
-		state.exp_nodef_state(
+		state.exp_def_state_and_panic(
 			|| unsafe {
 				UnsafeManuallyDrop::drop(value);
 			}
