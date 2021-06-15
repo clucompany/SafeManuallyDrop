@@ -129,7 +129,6 @@ impl<T> ManuallyDrop<T> {
 		
 		ManuallyDrop { 
 			value,
-			state: StateManuallyDrop::default(),
 		}
 	}
 	
@@ -205,16 +204,16 @@ impl<T> ManuallyDrop<T> {
 		!self.state.is_def_mode()
 	}
 	
+	#[cfg(not(debug_assertions))]
+	pub fn is_maybe_next_panic(&self) -> bool {
+		false
+	}
+	
 	#[inline(always)]
 	pub unsafe fn ignore_drop(&self) {
 		#[cfg(debug_assertions)] {
 			self.state.to_ignore_panic_when_drop();
 		}
-	}
-	
-	#[inline(always)]
-	fn __get_state_and_value<F: FnOnce(&mut Box<UnsafeManuallyDrop<T>>, &StateManuallyDrop) -> R, R>(&mut self, next: F) -> R {
-		next(&mut self.value, &self.state)
 	}
 }
 
