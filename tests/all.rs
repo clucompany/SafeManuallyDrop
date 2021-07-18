@@ -177,7 +177,10 @@ mod panic_test_methods {
 #[test]
 fn test_panic_mode() {
 	use SafeManuallyDrop::ManuallyDrop;
-	assert_eq!(ManuallyDrop::is_safe_mode(), true);
+	if !ManuallyDrop::is_safe_mode() {
+		println!("#[warning] ignore test panic_mode(), release_mode: true");
+		return;
+	}
 	
 	
 	static mut PANIC_COUNTER: usize = 0;

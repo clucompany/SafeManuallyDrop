@@ -20,10 +20,9 @@
 
 #![no_std]
 
-extern crate alloc;
 
-use alloc::prelude::v1::Box;
 use core::hash::Hash;
+#[cfg(debug_assertions)]
 use crate::state::StateManuallyDrop;
 use core::ops::DerefMut;
 use core::ops::Deref;
@@ -31,6 +30,7 @@ pub use core::mem::ManuallyDrop as UnsafeManuallyDrop;
 
 pub type SafeManuallyDrop<T> = ManuallyDrop<T>;
 
+#[cfg(debug_assertions)]
 mod state;
 pub mod flags;
 mod events;
@@ -45,11 +45,13 @@ pub struct ManuallyDrop<T> where T: ?Sized {
 
 // SafeTest
 #[cfg(debug_assertions)]
-#[derive(/*Copy,*/ Clone, Debug)] /*Copy, :((*/
+#[derive(/*Copy,*/ Clone, Debug)]
 pub struct ManuallyDrop<T> where T: ?Sized {
-	value: Box<UnsafeManuallyDrop<T>>, // why box? -->> T: ?Sized
 	state: StateManuallyDrop,
+	value: UnsafeManuallyDrop<T>,
 }
+
+//impl<T> Copy for ManuallyDrop<T> where T: ?Sized + Copy {}
 
 #[cfg(debug_assertions)]
 impl<T> Default for ManuallyDrop<T> where T: ?Sized + Default {
@@ -74,8 +76,9 @@ impl<T, Rhs> PartialEq<Rhs> for ManuallyDrop<T> where T: ?Sized + PartialEq<Rhs>
 	}
 }
 
+
 #[cfg(debug_assertions)]
-impl<T> Eq for ManuallyDrop<T> where T: ?Sized + Eq + PartialEq<Self> {
+impl<T> Eq for ManuallyDrop<T> where T: Eq + PartialEq<ManuallyDrop<T>> {
 	#[inline]
 	fn assert_receiver_is_total_eq(&self) {
 		let value: &T = self.value.deref();
@@ -92,8 +95,9 @@ impl<T, Rhs> PartialOrd<Rhs> for ManuallyDrop<T> where T: ?Sized + PartialOrd<Rh
 	}
 }
 
+
 #[cfg(debug_assertions)]
-impl<T> Ord for ManuallyDrop<T> where T: ?Sized + Eq + PartialEq<Self> + PartialOrd<Self> + Ord {
+impl<T> Ord for ManuallyDrop<T> where T: Ord + PartialOrd<ManuallyDrop<T>> {
 	#[inline]
 	fn cmp(&self, a: &Self) -> core::cmp::Ordering {
 		let value: &T = self.value.deref();
@@ -114,7 +118,7 @@ impl<T> ManuallyDrop<T> {
 	#[cfg(debug_assertions)]
 	#[inline(always)]
 	pub /*const*/ fn new(value: T) -> ManuallyDrop<T> {
-		let value = Box::new(UnsafeManuallyDrop::new(value));
+		let value = UnsafeManuallyDrop::new(value);
 		
 		ManuallyDrop { 
 			value,
@@ -132,40 +136,43 @@ impl<T> ManuallyDrop<T> {
 		}
 	}
 	
+	#[inline(always)]
+	pub fn as_ptr(&self) -> *const T {
+		&*self.value
+	}
+	
+	#[inline(always)]
+	pub fn as_mut_ptr(&mut self) -> *mut T {
+		&mut *self.value
+	}
+	
+	#[inline(always)]
+	pub fn as_value(&self) -> &T {
+		&self.value
+	}
+	
+	#[inline(always)]
+	pub fn as_mut_value(&mut self) -> &mut T {
+		&mut self.value
+	}
 	
 	#[cfg(not(debug_assertions))]
 	#[inline(always)]
 	pub /*const*/ fn into_inner(slot: ManuallyDrop<T>) -> T {
 		let value = slot.value;
 		
-		UnsafeManuallyDrop::into_inner(
-			value
-		)
+		UnsafeManuallyDrop::into_inner(value)
 	}
 	
 	#[cfg(debug_assertions)]
 	#[inline(always)]
 	pub /*const*/ fn into_inner(slot: ManuallyDrop<T>) -> T {
-		slot.state.to_intoinnermode_or_panic();
-		
-		// why? ->> (box_into_inner #80437)
-		let value = {
-			let value: UnsafeManuallyDrop<T> = unsafe {
-				core::ptr::read(slot.value.deref() as _)
-			};
-			
-			// Ignore T, T == ManuallyDrop
-			drop(slot);
-			
-			value
-		};
-		
-		UnsafeManuallyDrop::into_inner(
-			value
-		)
+		let core_inner = Self::into_core_inner(slot);
+		UnsafeManuallyDrop::into_inner(core_inner)
 	}
 	
 	#[cfg(not(debug_assertions))]
+	#[inline(always)]
 	pub const fn into_core_inner(slot: ManuallyDrop<T>) -> UnsafeManuallyDrop<T> {
 		slot.value
 	}
@@ -175,19 +182,13 @@ impl<T> ManuallyDrop<T> {
 	pub /*const*/ fn into_core_inner(slot: ManuallyDrop<T>) -> UnsafeManuallyDrop<T> {
 		slot.state.to_intoinnermode_or_panic();
 		
-		// why? ->> (box_into_inner #80437)
-		let value = {
-			let value: UnsafeManuallyDrop<T> = unsafe {
-				core::ptr::read(slot.value.deref() as _)
-			};
-			
-			// Ignore T, T == ManuallyDrop
-			drop(slot);
-			
-			value
+		// analog UnsafeManuallyDrop::take
+		let result: UnsafeManuallyDrop<T> = unsafe {
+			core::ptr::read(&slot.value)
 		};
 		
-		value
+		let _ignore_drop = UnsafeManuallyDrop::new(slot);
+		result
 	}
 	
 	#[inline(always)]

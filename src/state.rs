@@ -1,4 +1,5 @@
 
+use core::fmt::Debug;
 use core::sync::atomic::Ordering;
 use core::sync::atomic::AtomicU8;
 
@@ -6,7 +7,6 @@ const READ_ORDERING_METHOD: Ordering = Ordering::SeqCst;
 const WRITE_ORDERING_METHOD: Ordering = Ordering::SeqCst; // 
 
 #[repr(transparent)]
-#[derive(Debug)]
 pub struct StateManuallyDrop {
 	state: AtomicU8,
 }
@@ -17,6 +17,15 @@ impl Clone for StateManuallyDrop {
 		Self {
 			state: AtomicU8::new(self.__read())
 		}
+	}
+}
+
+impl Debug for StateManuallyDrop {
+	#[inline]
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+		f.debug_struct("StateManuallyDrop")
+		.field("state", &StateManuallyDropData::from(self.__read()))
+		.finish()
 	}
 }
 
