@@ -1,5 +1,4 @@
 
-
 use SafeManuallyDrop::ManuallyDrop;
 
 /// Build test data

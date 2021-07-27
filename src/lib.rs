@@ -21,8 +21,8 @@
 #![no_std]
 
 
+use crate::state::StateManuallyDropData;
 use core::hash::Hash;
-#[cfg(debug_assertions)]
 use crate::state::StateManuallyDrop;
 use core::ops::DerefMut;
 use core::ops::Deref;
@@ -30,10 +30,9 @@ pub use core::mem::ManuallyDrop as UnsafeManuallyDrop;
 
 pub type SafeManuallyDrop<T> = ManuallyDrop<T>;
 
-#[cfg(debug_assertions)]
-mod state;
+pub mod state;
 pub mod flags;
-mod events;
+pub mod panic;
 
 // Unsafe
 #[cfg(not(debug_assertions))]
@@ -51,7 +50,7 @@ pub struct ManuallyDrop<T> where T: ?Sized {
 	value: UnsafeManuallyDrop<T>,
 }
 
-//impl<T> Copy for ManuallyDrop<T> where T: ?Sized + Copy {}
+//impl<T> Copy for ManuallyDrop<T> where T: ?Sized + Copy {} TODO
 
 #[cfg(debug_assertions)]
 impl<T> Default for ManuallyDrop<T> where T: ?Sized + Default {
@@ -136,6 +135,28 @@ impl<T> ManuallyDrop<T> {
 		}
 	}
 	
+	#[inline]
+	pub fn get_state(&self) -> Option<StateManuallyDropData> {
+		#[cfg(not(debug_assertions))] {
+			return None;
+		}
+		
+		#[cfg(debug_assertions)] {
+			return Some(self.state.read());
+		}
+	}
+	
+	#[inline]
+	pub fn is_def_state(&self) -> Option<bool> {
+		#[cfg(not(debug_assertions))] {
+			return None;
+		}
+		
+		#[cfg(debug_assertions)] {
+			return Some(self.state.is_def_mode());
+		}
+	}
+	
 	#[inline(always)]
 	pub fn as_ptr(&self) -> *const T {
 		&*self.value
@@ -156,18 +177,10 @@ impl<T> ManuallyDrop<T> {
 		&mut self.value
 	}
 	
-	#[cfg(not(debug_assertions))]
-	#[inline(always)]
-	pub /*const*/ fn into_inner(slot: ManuallyDrop<T>) -> T {
-		let value = slot.value;
-		
-		UnsafeManuallyDrop::into_inner(value)
-	}
-	
-	#[cfg(debug_assertions)]
 	#[inline(always)]
 	pub /*const*/ fn into_inner(slot: ManuallyDrop<T>) -> T {
 		let core_inner = Self::into_core_inner(slot);
+			
 		UnsafeManuallyDrop::into_inner(core_inner)
 	}
 	
@@ -200,14 +213,15 @@ impl<T> ManuallyDrop<T> {
 		UnsafeManuallyDrop::take(&mut slot.value)
 	}
 	
-	#[cfg(debug_assertions)]
+	#[inline(always)]
 	pub fn is_maybe_next_panic(&self) -> bool {
-		!self.state.is_def_mode()
-	}
-	
-	#[cfg(not(debug_assertions))]
-	pub fn is_maybe_next_panic(&self) -> bool {
-		false
+		#[cfg(not(debug_assertions))] {
+			return false;
+		}
+		
+		#[cfg(debug_assertions)] {
+			return !self.state.is_def_mode();
+		}
 	}
 	
 	#[inline(always)]
@@ -242,7 +256,7 @@ impl<T> Deref for ManuallyDrop<T> where T: ?Sized {
 	#[inline(always)]
 	fn deref(&self) -> &T {
 		#[cfg(debug_assertions)] {
-			self.state.deref_or_panic();
+			self.state.deref_or_panic(|| {});
 		}
 		
 		&self.value
@@ -253,7 +267,7 @@ impl<T> DerefMut for ManuallyDrop<T> where T: ?Sized {
 	#[inline(always)]
 	fn deref_mut(&mut self) -> &mut T {
 		#[cfg(debug_assertions)] {
-			self.state.deref_or_panic();
+			self.state.deref_or_panic(|| {});
 		}
 		
 		&mut self.value
@@ -274,3 +288,5 @@ impl<T> Drop for ManuallyDrop<T> where T: ?Sized {
 		);
 	}
 }
+
+

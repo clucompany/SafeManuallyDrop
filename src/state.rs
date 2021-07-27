@@ -15,7 +15,7 @@ impl Clone for StateManuallyDrop {
 	#[inline]
 	fn clone(&self) -> Self {
 		Self {
-			state: AtomicU8::new(self.__read())
+			state: AtomicU8::new(self.__read_byte())
 		}
 	}
 }
@@ -24,133 +24,217 @@ impl Debug for StateManuallyDrop {
 	#[inline]
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
 		f.debug_struct("StateManuallyDrop")
-		.field("state", &StateManuallyDropData::from(self.__read()))
+		.field("state", &self.read())
 		.finish()
 	}
 }
 
-const DEF_STATE: u8 = 1;
-const TAKE_MODE_STATE: u8 = 2;
-const DROP_MODE_STATE: u8 = 3;
-const INTO_INNER_MODE_STATE: u8 = 4;
-const IGNORE_PANIC_WHEN_DROP_STATE: u8 = 5;
-
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum StateManuallyDropData {
-	DefState = DEF_STATE,
+	DefState = 1,
 	
-	TakeMode = TAKE_MODE_STATE,
-	DropMode = DROP_MODE_STATE,
-	IntoInnerMode = INTO_INNER_MODE_STATE,
+	TakeMode = 5,
+	DropMode = 15,
+	IntoInnerMode = 25,
 	
-	IgnorePanicWhenDrop = IGNORE_PANIC_WHEN_DROP_STATE,
+	IgnorePanicWhenDrop = 30,
 }
 
 impl From<u8> for StateManuallyDropData {
 	#[inline]
 	fn from(a: u8) -> Self {
-		match a {
-			a if a == DEF_STATE => Self::DefState,
-			a if a == TAKE_MODE_STATE => Self::TakeMode,
-			a if a == DROP_MODE_STATE => Self::DropMode,
-			a if a == INTO_INNER_MODE_STATE => Self::IntoInnerMode,
-			a if a == IGNORE_PANIC_WHEN_DROP_STATE => Self::IgnorePanicWhenDrop,
-			
-			_ => Self::DefState
-		}
+		StateManuallyDropData::from_or_default(a)
 	}
 }
 
 impl Default for StateManuallyDropData {
 	#[inline(always)]
 	fn default() -> Self {
+		StateManuallyDropData::default()
+	}
+}
+
+impl StateManuallyDropData {
+	#[inline(always)]
+	pub const fn into(self) -> u8 {
+		self as _
+	}
+	
+	#[inline]
+	pub /*const*/ fn from_or_default(a: u8) -> Self {
+		Self::is_valid_byte_fn(
+			a, 
+			|| unsafe {
+				Self::force_from(a)
+			},
+			|| Self::default()
+		)
+	}
+	
+	#[inline]
+	pub /*const*/ fn from(a: u8) -> Option<Self> {
+		Self::is_valid_byte_fn(
+			a, 
+			|| Some(unsafe {
+				Self::force_from(a)
+			}),
+			|| None
+		)
+	}
+	
+	#[inline(always)]
+	pub const fn default() -> Self {
 		Self::DefState
+	}
+	
+	#[inline(always)]
+	pub /*const*/ fn is_valid_byte_fn<F: FnOnce() -> R, FE: FnOnce() -> R, R>(a: u8, next: F, errf: FE) -> R {
+		match a {
+			a if a == Self::DefState as _ ||
+			
+				a == Self::TakeMode as _ ||
+				a == Self::DropMode as _ ||
+				a == Self::IntoInnerMode as _ ||
+				
+				a == Self::IgnorePanicWhenDrop as _ => next(),
+			_ => errf()
+		}
+	}
+	
+	#[inline]
+	pub fn is_valid_byte(a: u8) -> bool {
+		Self::is_valid_byte_fn(
+			a, 
+			|| true,
+			|| false,
+		)
+	}
+	
+	#[inline(always)]
+	pub unsafe fn force_from(a: u8) -> Self {
+		debug_assert_eq!(
+			Self::is_valid_byte(a),
+			true
+		);
+		
+		#[allow(unused_unsafe)]
+		let result: Self = unsafe {
+			core::mem::transmute(a as u8)
+		};
+		result
 	}
 }
 
 impl StateManuallyDrop {
-	#[inline(never)] // YES!
-	pub const fn new() -> Self {
+	#[inline(always)]
+	pub const fn default() -> Self {
 		Self {
-			state: AtomicU8::new(DEF_STATE)
+			state: AtomicU8::new(StateManuallyDropData::default() as _)
 		}
 	}
 	
 	#[inline(always)]
 	pub fn is_def_mode(&self) -> bool {
-		self.__read() == DEF_STATE
+		self.read() == StateManuallyDropData::default() as _
 	}
-
+	
 	#[inline(always)]
-	fn __read(&self) -> u8 {
+	fn __read_byte(&self) -> u8 {
 		self.state.load(READ_ORDERING_METHOD)
 	}
 	
 	#[inline(always)]
-	fn __write(&self, a: u8) -> u8 {
-		self.state.swap(a, WRITE_ORDERING_METHOD)
+	pub fn read(&self) -> StateManuallyDropData {
+		let byte = self.__read_byte();
+		unsafe {
+			StateManuallyDropData::force_from(byte)
+		}
+	}
+	
+	#[inline(always)]
+	fn __write(&self, a: StateManuallyDropData) -> StateManuallyDropData {
+		let byte = self.state.swap(a as _, WRITE_ORDERING_METHOD);
+		unsafe {
+			StateManuallyDropData::force_from(byte)
+		}
 	}
 	
 	#[inline]
-	fn __safe_replace_mutstate(&self, new_state: u8) {
-		let astate = self.__write(new_state);
-		match astate == DEF_STATE {
+	fn __safe_replace_mutstate(&self, new_state: StateManuallyDropData) {
+		let a_state = self.__write(new_state);
+		
+		let def_state = StateManuallyDropData::default();
+		match a_state == def_state {
 			true => {},
-			false => {
-				crate::undef_beh_nextpanic!(
+			false => crate::panic::run_hook(
+				format_args!(
 					"SafeManuallyDrop, undef_beh, {:?} != {:?}", 
-					StateManuallyDropData::default(),
-					StateManuallyDropData::from(astate)
+					def_state,
+					a_state
 				)
-			},
+			),
 		}
 	}
 	
 	#[inline(always)]
 	pub fn to_dropmode_or_panic(&self) {
-		self.__safe_replace_mutstate(DROP_MODE_STATE);
+		self.__safe_replace_mutstate(
+			StateManuallyDropData::DropMode
+		);
 	}
 	
 	#[inline(always)]
 	pub fn to_takemode_or_panic(&self) {
-		self.__safe_replace_mutstate(TAKE_MODE_STATE);
+		self.__safe_replace_mutstate(
+			StateManuallyDropData::TakeMode
+		);
 	}
 	
 	#[inline(always)]
 	pub fn to_ignore_panic_when_drop(&self) {
-		self.__safe_replace_mutstate(IGNORE_PANIC_WHEN_DROP_STATE);
+		self.__safe_replace_mutstate(
+			StateManuallyDropData::IgnorePanicWhenDrop
+		);
 	}
 	
 	#[inline(always)]
 	pub fn to_intoinnermode_or_panic(&self) {
-		self.__safe_replace_mutstate(INTO_INNER_MODE_STATE);
+		self.__safe_replace_mutstate(
+			StateManuallyDropData::IntoInnerMode
+		);
 	}
 	
-	pub fn deref_or_panic(&self) {
-		let astate = self.__read();
+	pub fn deref_or_panic<F: FnOnce()>(&self, fn_panic: F) {
+		let a_state = self.read();
 		
-		if astate != DEF_STATE {
-			//fn_panic();
+		let def_state = StateManuallyDropData::default();
+		if a_state != def_state {
+			fn_panic();
 			
-			crate::undef_beh_nextpanic!(
-				"SafeManuallyDrop, undef_beh (deref_or_panic), {:?} == {:?}",
-				StateManuallyDropData::default(),
-				StateManuallyDropData::from(astate)
+			crate::panic::run_hook(
+				format_args!(
+					"SafeManuallyDrop, undef_beh (deref_or_panic), {:?} == {:?}",
+					def_state,
+					a_state
+				)
 			)
 		}
 	}
 	
 	pub fn exp_def_state_and_panic<F: FnOnce()>(&self, fn_panic: F) {
-		let astate = self.__read();
+		let a_state = self.read();
 		
-		if astate == DEF_STATE {
+		let def_state = StateManuallyDropData::default();
+		if a_state == def_state {
 			fn_panic();
 			
-			crate::undef_beh_nextpanic!(
-				"SafeManuallyDrop, undef_beh (exp_def_state), {:?} == {:?}",
-				StateManuallyDropData::default(),
-				StateManuallyDropData::from(astate)
+			crate::panic::run_hook(
+				format_args!(
+					"SafeManuallyDrop, undef_beh (exp_def_state), {:?} == {:?}",
+					def_state,
+					a_state
+				)
 			)
 		}
 	}
@@ -159,6 +243,6 @@ impl StateManuallyDrop {
 impl Default for StateManuallyDrop {
 	#[inline(always)]
 	fn default() -> Self {
-		Self::new()
+		StateManuallyDrop::default()
 	}
 }
