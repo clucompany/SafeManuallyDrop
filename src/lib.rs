@@ -159,12 +159,14 @@ impl<T> ManuallyDrop<T> {
 	
 	#[inline(always)]
 	pub fn as_ptr(&self) -> *const T {
-		&*self.value
+		// TODO, VALID?, Exp: ManuallyDrop::as_ptr
+		&*(self.value.deref() as &T)
 	}
 	
 	#[inline(always)]
 	pub fn as_mut_ptr(&mut self) -> *mut T {
-		&mut *self.value
+		// TODO, VALID?, Exp: ManuallyDrop::as_mut_ptr
+		&mut *(self.value.deref_mut() as &mut T)
 	}
 	
 	#[inline(always)]
