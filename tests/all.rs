@@ -4,7 +4,7 @@ use SafeManuallyDrop::ManuallyDrop;
 /// Build test data
 #[inline(never)]
 fn build_new_test_vec() -> Vec<String> {
-	let mut vec = Vec::new();
+	let mut vec = Vec::with_capacity(4);
 	vec.push("test".into());
 	vec.push("test2".into());
 	vec.push("test3".into());
@@ -29,7 +29,7 @@ mod panic_test_methods {
 			unsafe {
 				ManuallyDrop::drop(&mut control_drop);
 				
-				assert_eq!(control_drop.is_maybe_next_panic(), true);
+				assert_eq!(control_drop.is_next_trig(), true);
 				// <<-- PANIC
 				ManuallyDrop::drop(&mut control_drop);
 			}
@@ -50,7 +50,7 @@ mod panic_test_methods {
 			}
 		}
 		
-		assert_eq!(control_drop.is_maybe_next_panic(), true);
+		assert_eq!(control_drop.is_next_trig(), true);
 		// <<-- PANIC
 		let _e = control_drop.deref();
 	}
@@ -71,7 +71,7 @@ mod panic_test_methods {
 			drop(data);
 		}
 		
-		assert_eq!(control_drop.is_maybe_next_panic(), true);
+		assert_eq!(control_drop.is_next_trig(), true);
 		// <<-- PANIC
 		let _e = control_drop.deref();
 	}
@@ -92,7 +92,7 @@ mod panic_test_methods {
 			drop(data);
 		}
 		
-		assert_eq!(control_drop.is_maybe_next_panic(), true);
+		assert_eq!(control_drop.is_next_trig(), true);
 		// <<-- PANIC
 		unsafe {
 			ManuallyDrop::drop(&mut control_drop);
@@ -113,7 +113,7 @@ mod panic_test_methods {
 			}
 		}
 		
-		assert_eq!(control_drop.is_maybe_next_panic(), true);
+		assert_eq!(control_drop.is_next_trig(), true);
 		// <<-- PANIC
 		let _data = ManuallyDrop::into_inner(control_drop);
 	}
