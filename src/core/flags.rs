@@ -88,25 +88,50 @@ crate::cfg_if_safemode! {
 	#if_safe (pub const IS_SAFE_MODE: bool = true;)
 }
 
-#[cfg(feature = "support_panic_trig")]
-pub const SUPPORT_PANIC_TRIG: bool = true;
+#[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_PANIC_TRIG` instead")]
+pub const SUPPORT_PANIC_TRIG: bool = IS_SUPPORT_PANIC_TRIG;
+pub const IS_SUPPORT_PANIC_TRIG: bool = {
+	#[cfg(feature = "support_panic_trig")] {
+		true
+	}
+	
+	#[cfg(not(feature = "support_panic_trig"))] {
+		false
+	}
+};
 
-#[cfg(not(feature = "support_panic_trig"))]
-pub const SUPPORT_PANIC_TRIG: bool = false;
+#[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_HOOKFN_TRIG` instead")]
+pub const SUPPORT_HOOKFN_TRIG: bool = IS_SUPPORT_HOOKFN_TRIG;
+pub const IS_SUPPORT_HOOKFN_TRIG: bool = {
+	#[cfg(feature = "support_hookfn_trig")] {
+		true
+	}
+	
+	#[cfg(not(feature = "support_hookfn_trig"))] {
+		false
+	}
+};
 
-#[cfg(feature = "support_hook_trig")]
-pub const SUPPORT_HOOK_TRIG: bool = true;
+#[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_COUNT_TRIG` instead")]
+pub const SUPPORT_COUNT_TRIG: bool = IS_SUPPORT_COUNT_TRIG;
+pub const IS_SUPPORT_COUNT_TRIG: bool = {
+	#[cfg(feature = "support_count_trig")] {
+		true
+	}
+	
+	#[cfg(not(feature = "support_count_trig"))] {
+		false
+	}
+};
 
-#[cfg(not(feature = "support_hook_trig"))]
-pub const SUPPORT_HOOK_TRIG: bool = false;
+#[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_EMPTY_TRIG` instead")]
+pub const SUPPORT_EMPTY_TRIG: bool = IS_SUPPORT_EMPTY_TRIG;
+pub const IS_SUPPORT_EMPTY_TRIG: bool = true;
 
-#[cfg(feature = "support_count_trig")]
-pub const SUPPORT_COUNT_TRIG: bool = true;
-
-#[cfg(not(feature = "support_count_trig"))]
-pub const SUPPORT_COUNT_TRIG: bool = false;
-
-pub const SUPPORT_EMPTY_TRIG: bool = true;
+pub const IS_AUTO_DETECT_DEFTRIG: bool = crate::core::trig::IS_AUTO_DETECT_DEFTRIG;
+/// If the build was done using "all functions" (cargo test/doc/build --all-features), the required behavior in a safe mandrop cannot be determined, 
+/// if this flag is active, EmptyLoopTrigManuallyDrop will be used.
+pub const IS_INVALID_AUTO_DETECT_DEFTRIG: bool = crate::core::trig::IS_INVALID_AUTO_DETECT_DEFTRIG;
 
 #[cfg(test)]
 #[test]

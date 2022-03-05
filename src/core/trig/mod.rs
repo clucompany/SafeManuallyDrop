@@ -25,7 +25,7 @@ pub mod panic;
 #[cfg(feature = "support_count_trig")]
 pub mod counter;
 
-#[cfg(feature = "support_hook_trig")]
+#[cfg(feature = "support_hookfn_trig")]
 pub mod hook;
 
 /// Implementation of behavior in case of detection of undefined manual memory management.
@@ -33,20 +33,30 @@ pub trait TrigManuallyDrop {
 	fn trig_next_invalid_beh<'a>(a: Arguments<'a>) -> trig_manuallydrop_returntype!();
 }
 
-/// Trigger is the default function that will be executed in case of undefined behavior of protected ManuallyDrop.
-#[cfg(feature = "support_hook_trig")]
-pub type DefTrigManuallyDrop = crate::core::trig::hook::HookFnTrigManuallyDrop;
+#[cfg(any(
+	feature = "always_deftrig_panic",
+	feature = "always_deftrig_hookfn",
+	feature = "always_deftrig_count",
+	feature = "always_deftrig_loop",
+))]
+#[path = "fix_deftrig.rs"]
+pub mod current_deftrig;
 
-/// Trigger is the default function that will be executed in case of undefined behavior of protected ManuallyDrop.
-#[cfg(not(feature = "support_hook_trig"))]
-pub type DefTrigManuallyDrop = EmptyLoopTrigManuallyDrop;
+#[cfg(all(
+	not(feature = "always_deftrig_panic"),
+	not(feature = "always_deftrig_hookfn"),
+	not(feature = "always_deftrig_count"),
+	not(feature = "always_deftrig_loop")
+))]
+#[path = "auto_detect_deftrig.rs"]
+pub mod current_deftrig;
 
-pub enum EmptyLoopTrigManuallyDrop {}
+pub use current_deftrig::DefTrigManuallyDrop;
+pub (crate) use current_deftrig::IS_AUTO_DETECT_DEFTRIG;
+pub (crate) use current_deftrig::IS_INVALID_AUTO_DETECT_DEFTRIG;
 
-impl TrigManuallyDrop for EmptyLoopTrigManuallyDrop {
-	#[inline(always)]
-	fn trig_next_invalid_beh<'a>(_a: Arguments<'a>) -> trig_manuallydrop_returntype!() {
-		loop {}
-	}
-}
+pub mod r#loop;
 
+#[doc(hidden)]
+#[deprecated(since = "0.1.5", note = "Use `crate::core::trig::r#loop::EmptyLoopTrigManuallyDrop` instead")]
+pub use crate::core::trig::r#loop::EmptyLoopTrigManuallyDrop as EmptyLoopTrigManuallyDrop;

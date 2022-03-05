@@ -1,7 +1,7 @@
 
 #[cfg(feature = "support_panic_trig")]
 use crate::core::trig::panic::PanicTrigManuallyDrop;
-use crate::TrigManuallyDrop;
+use crate::core::trig::TrigManuallyDrop;
 use core::fmt::Debug;
 use core::sync::atomic::Ordering;
 use core::sync::atomic::AtomicU8;
@@ -234,6 +234,16 @@ impl StateManuallyDrop {
 		}
 	}
 	
+	/// For tests only, resets the MannualuDrop state to the initial state
+	pub unsafe fn flush(&mut self) -> StateManuallyDropData {
+		let result = self.__force_write(
+			StateManuallyDropData::Empty
+		);
+		debug_assert_eq!(self.is_next_trig(), false);
+		
+		result
+	}
+	
 	#[inline]
 	fn __safe_replace_mutstate<Trig: TrigManuallyDrop>(&self, new_state: StateManuallyDropData) {
 		debug_assert_eq!(new_state.is_next_trig(), true);
@@ -244,7 +254,7 @@ impl StateManuallyDrop {
 		if old_state.is_next_trig() {
 			Trig::trig_next_invalid_beh(
 				format_args!(
-					"SafeManuallyDrop, undef_beh (combo_replace_state), SafeManuallyDrop::empty() != {:?}", 
+					"Undefined behavior when using ManuallyDrop(combo_replace_manudropstate), instead of the expected default state, the current state: {:?}.", 
 					old_state
 				)
 			);
@@ -326,7 +336,7 @@ impl StateManuallyDrop {
 			
 			Trig::trig_next_invalid_beh(
 				format_args!(
-					"SafeManuallyDrop, undef_beh (deref_or_panic), SafeManuallyDrop::no_panic_state() != {:?}",
+					"Undefined behavior when using ManuallyDrop.deref(), instead of the expected default state, the current state: {:?}.",
 					a_state
 				)
 			)
@@ -339,7 +349,7 @@ impl StateManuallyDrop {
 		if a_state.is_next_trig() {
 			Trig::trig_next_invalid_beh(
 				format_args!(
-					"SafeManuallyDrop, undef_beh (deref_or_trig), SafeManuallyDrop::no_panic_state() != {:?}",
+					"Undefined behavior when using ManuallyDrop.deref(), instead of the expected default state, the current state: {:?}.",
 					a_state
 				)
 			)
@@ -364,7 +374,7 @@ impl StateManuallyDrop {
 		}
 	}
 	
-	pub fn if_empty_then_run_trigfn<Trig: TrigManuallyDrop, F: FnOnce()>(&self, fn_trig: F) {
+	pub fn if_empty_then_run_trigfn<Trig: TrigManuallyDrop, F: FnOnce()>(&self, exp_str: &'static str, fn_trig: F) {
 		let a_state = self.read();
 		
 		if a_state.is_empty() {
@@ -372,7 +382,8 @@ impl StateManuallyDrop {
 			
 			Trig::trig_next_invalid_beh(
 				format_args!(
-					"SafeManuallyDrop, undef_beh (exp_def_state), SafeManuallyDrop::empty() == {:?}",
+					"Undefined behavior when using ManuallyDrop ({}), state should not be default, current state is {:?}.",
+					exp_str,
 					a_state
 				)
 			)
