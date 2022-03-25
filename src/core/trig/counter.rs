@@ -18,48 +18,23 @@ pub type CounterManuallyDrop<T> = crate::beh::safe::SafeManuallyDrop<T, CounterT
 pub enum CounterTrigManuallyDrop {}
 
 impl TrigManuallyDrop for CounterTrigManuallyDrop {
-	#[inline(always)]
+	#[inline]
 	fn trig_next_invalid_beh<'a>(_a: Arguments<'a>) -> trig_manuallydrop_returntype!() {
-		crate::cfg_if_safemode! {
-			#if_safe() {
-				COUNT_TRIG_SAFEMANUALLYDROP.fetch_add(1, DEF_SETORDERING);
-			}
-		}
+		COUNT_TRIG_SAFEMANUALLYDROP.fetch_add(1, DEF_SETORDERING);
 	}
 }
 
+/// Get the number of times the undefined behavior was triggered.
 #[inline]
-pub fn get_count_trig_safemanuallydrop() -> u32 {
-	crate::cfg_if_safemode! {
-		#if_safe() {
-			let result: u32 = COUNT_TRIG_SAFEMANUALLYDROP.load(DEF_GETORDERING);
-			result
-		}else {
-			0u32
-		}
-	}
-}
-
-#[inline]
-pub fn get_optioncount_trig_safemanuallydrop() -> Option<u32> {
-	crate::cfg_if_safemode! {
-		#if_safe() {
-			Some( COUNT_TRIG_SAFEMANUALLYDROP.load(DEF_GETORDERING) )
-		}else {
-			None
-		}
-	}
+pub fn get_count_trig_events() -> u32 {
+	COUNT_TRIG_SAFEMANUALLYDROP.load(DEF_GETORDERING)
 }
 
 impl CounterManuallyDrop<()> {
+	/// Get the number of times the undefined behavior was triggered.
 	#[inline(always)]
-	pub fn get_count_trig_safemanuallydrop() -> u32 {
-		crate::core::trig::counter::get_count_trig_safemanuallydrop()
-	}
-	
-	#[inline(always)]
-	pub fn get_optioncount_trig_safemanuallydrop() -> Option<u32> {
-		crate::core::trig::counter::get_optioncount_trig_safemanuallydrop()
+	pub fn get_count_trig_events() -> u32 {
+		crate::core::trig::counter::get_count_trig_events()
 	}
 }
 
@@ -81,17 +56,17 @@ fn test_counter_trig_manuallydrop() {
 	
 	unsafe { // combo drop
 		CounterManuallyDrop::drop(&mut check_data);
-		assert_eq!(CounterManuallyDrop::get_count_trig_safemanuallydrop(), 0);
+		assert_eq!(CounterManuallyDrop::get_count_trig_events(), 0);
 		
 		CounterManuallyDrop::drop(&mut check_data);
-		assert_eq!(CounterManuallyDrop::get_count_trig_safemanuallydrop(), 1);
+		assert_eq!(CounterManuallyDrop::get_count_trig_events(), 1);
 		
 		CounterManuallyDrop::drop(&mut check_data);
-		assert_eq!(CounterManuallyDrop::get_count_trig_safemanuallydrop(), 2);
+		assert_eq!(CounterManuallyDrop::get_count_trig_events(), 2);
 		
 		assert_eq!(
 			__TEST_COUNTER.load(DEF_GETORDERING),
-			CounterManuallyDrop::get_count_trig_safemanuallydrop() + 1
+			CounterManuallyDrop::get_count_trig_events() + 1
 		);
 	}
 }

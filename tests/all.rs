@@ -2,9 +2,9 @@
 use SafeManuallyDrop::ManuallyDrop;
 
 /// Build test data
-#[inline(never)]
+#[inline]
 fn build_new_test_vec() -> Vec<String> {
-	let mut vec = Vec::with_capacity(4);
+	let mut vec = Vec::with_capacity(3);
 	vec.push("test".into());
 	vec.push("test2".into());
 	vec.push("test3".into());
@@ -13,25 +13,24 @@ fn build_new_test_vec() -> Vec<String> {
 }
 
 mod panic_test_methods {
-	use SafeManuallyDrop::ManuallyDrop;
+	use SafeManuallyDrop::PanicManuallyDrop;
 	use core::ops::Deref;
 	use super::build_new_test_vec;
-	use std::ops::DerefMut;
 	
 	/// PANIC METHOD #1
 	/// 1. COMBO DROP
 	#[inline(never)]
 	pub (crate) fn test_combo_drop(data: Vec<String>) {
-		let mut control_drop = ManuallyDrop::new(data);
+		let mut control_drop = PanicManuallyDrop::new(data); // VALID
+		let _e = control_drop.deref(); // VALID
 		
-		let _e = control_drop.deref();
 		{
 			unsafe {
-				ManuallyDrop::drop(&mut control_drop);
+				PanicManuallyDrop::drop(&mut control_drop); // VALID
 				
-				assert_eq!(control_drop.is_next_trig(), true);
+				assert_eq!(control_drop.is_next_trig(), true); // VALID
 				// <<-- PANIC
-				ManuallyDrop::drop(&mut control_drop);
+				PanicManuallyDrop::drop(&mut control_drop);  // INVALID
 			}
 		}
 	}
@@ -40,62 +39,61 @@ mod panic_test_methods {
 	/// 1. DROP + READ
 	#[inline(never)]
 	pub (crate) fn test_drop_and_read(data: Vec<String>) {
-		let mut control_drop = ManuallyDrop::new(data);
-		
-		let _e = control_drop.deref();
-		let _e = control_drop.deref();
+		let mut control_drop = PanicManuallyDrop::new(data); // VALID
+		let _e = control_drop.deref(); // VALID
+		let _e = control_drop.deref(); // VALID
 		{
 			unsafe {
-				ManuallyDrop::drop(&mut control_drop);
+				PanicManuallyDrop::drop(&mut control_drop); // VALID
 			}
 		}
 		
-		assert_eq!(control_drop.is_next_trig(), true);
+		assert_eq!(control_drop.is_next_trig(), true); // VALID
 		// <<-- PANIC
-		let _e = control_drop.deref();
+		let _e = control_drop.deref(); // INVALID
 	}
 	
 	/// PANIC METHOD #3
 	/// 1. READ + TAKE + READ
 	#[inline(never)]
 	pub (crate) fn test_take_and_read(data: Vec<String>) {
-		let mut control_drop = ManuallyDrop::new(data);
+		let mut control_drop = PanicManuallyDrop::new(data); // VALID
 		
-		let _e = control_drop.deref();
-		let _e = control_drop.deref();
+		let _e = control_drop.deref(); // VALID
+		let _e = control_drop.deref(); // VALID
 		{
 			let data = unsafe {
-				ManuallyDrop::take(&mut control_drop)
+				PanicManuallyDrop::take(&mut control_drop) // VALID
 			};
-			assert_eq!(data, build_new_test_vec());
-			drop(data);
+			assert_eq!(data, build_new_test_vec()); // VALID
+			drop(data); // VALID
 		}
+		assert_eq!(control_drop.is_next_trig(), true); // VALID
 		
-		assert_eq!(control_drop.is_next_trig(), true);
 		// <<-- PANIC
-		let _e = control_drop.deref();
+		let _e = control_drop.deref(); // INVALID
 	}
 	
 	/// PANIC METHOD #4
 	/// 1. READ + TAKE + DROP
 	#[inline(never)]
 	pub (crate) fn test_take_and_drop(data: Vec<String>) {
-		let mut control_drop = ManuallyDrop::new(data);
+		let mut control_drop = PanicManuallyDrop::new(data); // VALID
 		
-		let _e = control_drop.deref();
-		let _e = control_drop.deref();
+		let _e = control_drop.deref(); // VALID
+		let _e = control_drop.deref(); // VALID
 		{
 			let data = unsafe {
-				ManuallyDrop::take(&mut control_drop)
+				PanicManuallyDrop::take(&mut control_drop) // VALID
 			};
-			assert_eq!(data, build_new_test_vec());
-			drop(data);
+			assert_eq!(data, build_new_test_vec()); // VALID
+			drop(data); // VALID
 		}
+		assert_eq!(control_drop.is_next_trig(), true); // VALID
 		
-		assert_eq!(control_drop.is_next_trig(), true);
 		// <<-- PANIC
 		unsafe {
-			ManuallyDrop::drop(&mut control_drop);
+			PanicManuallyDrop::drop(&mut control_drop); // INVALID
 		}
 	}
 	
@@ -103,121 +101,114 @@ mod panic_test_methods {
 	/// 1. READ + DROP + INTO_INNER
 	#[inline(never)]
 	pub (crate) fn test_drop_and_into_inner(data: Vec<String>) {
-		let mut control_drop = ManuallyDrop::new(data);
+		let mut control_drop = PanicManuallyDrop::new(data); // VALID
 		
-		let _e = control_drop.deref();
-		let _e = control_drop.deref();
+		let _e = control_drop.deref(); // VALID
+		let _e = control_drop.deref(); // VALID
 		{
 			unsafe {
-				ManuallyDrop::drop(&mut control_drop)
+				PanicManuallyDrop::drop(&mut control_drop) // VALID
 			}
 		}
+		assert_eq!(control_drop.is_next_trig(), true); // VALID
 		
-		assert_eq!(control_drop.is_next_trig(), true);
 		// <<-- PANIC
-		let _data = ManuallyDrop::into_inner(control_drop);
+		let _data = PanicManuallyDrop::into_inner(control_drop); // INVALID
 	}
 	
 	/// PANIC METHOD #5
 	/// 1. AutoPanic when drop
 	#[inline(never)]
 	pub (crate) fn test_expmanualdrop(data: Vec<String>) {
-		let control_drop = ManuallyDrop::new(data);
+		let mut control_drop = PanicManuallyDrop::new(data); // VALID
+		
+		unsafe {
+			PanicManuallyDrop::drop(&mut control_drop); // VALID
+		}
+		assert_eq!(control_drop.is_next_trig(), true); // VALID
 		
 		// <<-- PANIC
-		drop(control_drop);
+		let _e = control_drop.deref(); // INVALID
 	}
 	
 	// IGNORE PANIC
 	#[inline(never)]
 	pub (crate) fn test_expmanualdrop2_ignorepanic(data: Vec<String>) {
-		let mut control_drop = ManuallyDrop::new(data);
+		let mut control_drop = PanicManuallyDrop::new(data); // VALID
 		
 		unsafe {
-			ManuallyDrop::drop(&mut control_drop);
+			PanicManuallyDrop::drop(&mut control_drop); // VALID
 		}
-		//
-		drop(control_drop);
+		
+		assert_eq!(control_drop.is_next_trig(), true); // VALID
 	}
 	
 	// IGNORE PANIC
 	#[inline(never)]
 	pub (crate) fn test_expmanualdrop3_ignorepanic(data: Vec<String>) {
-		let mut control_drop = ManuallyDrop::new(data);
+		let mut control_drop = PanicManuallyDrop::new(data); // VALID
 		
 		let data = unsafe {
-			ManuallyDrop::take(&mut control_drop)
+			PanicManuallyDrop::take(&mut control_drop) // VALID
 		};
-		//
-		drop(control_drop);
-		drop(data);
-	}
-	
-	// IGNORE PANIC
-	#[inline(never)]
-	pub (crate) fn test_expmanualdrop4_ignorepanic(data: Vec<String>) {
-		let mut control_drop = ManuallyDrop::new(data);
+		assert_eq!(control_drop.is_next_trig(), true); // VALID
 		
-		let ptr_data: *mut _ = control_drop.deref_mut();
-		unsafe {
-			// Leak:)
-			control_drop.ignore_drop();
-		}
-		{
-			// Ignore Leak when test
-			let data = unsafe {
-				std::ptr::read(ptr_data)
-			};
-			drop(data);
-		}
+		//
+		drop(control_drop); // VALID
+		drop(data); // VALID
 	}
 }
 
 #[test]
 fn test_panic_mode() {
-	use SafeManuallyDrop::ManuallyDrop;
-	if !ManuallyDrop::is_safe_mode() {
-		println!("#[warning] ignore test panic_mode(), release_mode: true");
-		return;
-	}
-	
-	
 	static mut PANIC_COUNTER: usize = 0;
 	std::panic::set_hook(Box::new(|panic_info| {
 		unsafe {
 			PANIC_COUNTER += 1;
 		}
-		println!("panic_num: {}, panic: {:?}", unsafe { PANIC_COUNTER }, panic_info);
+		
+		println!(
+			"#[test_trigger, num: {}] {:?}, OK.", 
+			unsafe { PANIC_COUNTER }, 
+			panic_info
+		);
 	}));
 	
 	
 	// Start test panic methods
 	// START POS
-	let c_ignore_panic = 3;
-	let arr_fn: &[(bool, &'static fn(a: Vec<String>))] = &[
-		(true, (&(panic_test_methods::test_combo_drop as fn(a: Vec<String>))) as _),
-		(true, (&(panic_test_methods::test_drop_and_read as fn(a: Vec<String>))) as _),
-		(true, (&(panic_test_methods::test_take_and_read as fn(a: Vec<String>))) as _),
-		(true, (&(panic_test_methods::test_take_and_drop as fn(a: Vec<String>))) as _),
-		(true, (&(panic_test_methods::test_drop_and_into_inner as fn(a: Vec<String>))) as _),
-		(true, (&(panic_test_methods::test_expmanualdrop as fn(a: Vec<String>))) as _),
+	let arr_fn: &[(bool, fn(a: Vec<String>))] = &[
+		(true, panic_test_methods::test_combo_drop as _),
+		(true, panic_test_methods::test_drop_and_read as _),
+		(true, panic_test_methods::test_take_and_read as _),
+		(true, panic_test_methods::test_take_and_drop as _),
+		(true, panic_test_methods::test_drop_and_into_inner as _),
+		(true, panic_test_methods::test_expmanualdrop as _),
 		
-		(false, (&(panic_test_methods::test_expmanualdrop2_ignorepanic as fn(a: Vec<String>))) as _),
-		(false, (&(panic_test_methods::test_expmanualdrop3_ignorepanic as fn(a: Vec<String>))) as _),
-		(false, (&(panic_test_methods::test_expmanualdrop4_ignorepanic as fn(a: Vec<String>))) as _),
+		(false, panic_test_methods::test_expmanualdrop2_ignorepanic as _),
+		(false, panic_test_methods::test_expmanualdrop3_ignorepanic as _),
 	];
 	
+	let mut c_ignore_panic = 0;
+	for (is_err, ..) in arr_fn.iter() {
+		if !is_err {
+			c_ignore_panic = c_ignore_panic + 1;
+		}
+	}
+	
 	for (is_err, function) in arr_fn.iter() {
-		let e = std::thread::spawn(move || {
-			let function = function;
-			function(build_new_test_vec());
+		let e = std::thread::spawn(|| {
+			let function = function.clone();
+			let new_data = build_new_test_vec();
 			
+			(function)(new_data);
 		}).join();
+		
 		assert_eq!(&e.is_err(), is_err);
 	}
 	
 	std::panic::set_hook(Box::new(|_| {}));
-	assert_eq!(unsafe {PANIC_COUNTER}, arr_fn.len() - c_ignore_panic);
+	assert_eq!(unsafe { PANIC_COUNTER }, arr_fn.len() - c_ignore_panic);
 }
 
 

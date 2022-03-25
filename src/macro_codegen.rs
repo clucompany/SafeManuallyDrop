@@ -52,6 +52,7 @@ macro_rules! __codegen {
 	] => {
 		impl<T, Trig> $current_type<T, Trig> where Trig: TrigManuallyDrop {
 			// Safe
+			/// Wrap a value to be manually dropped.
 			#[inline(always)]
 			pub /*const*/ fn new(value: T) -> Self {
 				let value = UnsafeStdManuallyDrop::new(value);
@@ -74,9 +75,8 @@ macro_rules! __codegen {
 				}
 			}
 			
-			/// Forgets value (similar to core::mem::forget),
-			/// if you need to forget a value in ManuallyData
-			/// use ignore_drop() instead of this function.
+			/// Forgets value (similar to core::mem::forget), if you need to forget a 
+			/// value in ManuallyData use ignore_drop() instead of this function.
 			#[inline(always)]
 			pub fn forget(value: T) {
 				let sself = Self::new(value);
@@ -93,6 +93,21 @@ macro_rules! __codegen {
 			#[inline(always)]
 			pub unsafe fn as_mut_unsafestd_manuallydrop(&mut self) -> &mut UnsafeStdManuallyDrop<T> {
 				&mut self.value
+			}
+			
+			/// Is ManuallyDrop a wrapper with values, or is it actually a transparent 
+			/// value with no false data. 
+			#[inline(always)]
+			pub fn is_repr_transparent(&self) -> bool {
+				crate::__if_codegen! {
+					if (#$is_safe) {
+						// Safe
+						false
+					} else {
+						// Unsafe
+						true
+					}
+				}
 			}
 			
 			#[inline]
@@ -114,6 +129,10 @@ macro_rules! __codegen {
 				self.is_empty_state()
 			}
 			
+			/// Checking if a trigger that defines undefined behavior will fire.
+			/// Some(true) - means that the state is empty and you can work with the value later.
+			/// Some(false) means that the value has already been converted by some method, and further work with the value will cause an undefined behavior trigger.
+			/// None - This version of ManuallyDrop is stateless, so defining undefined behavior is not possible.
 			#[inline]
 			pub fn is_empty_state(&self) -> Option<bool> {
 				crate::__if_codegen! {
@@ -130,25 +149,40 @@ macro_rules! __codegen {
 			#[inline(always)]
 			pub fn as_ptr(&self) -> *const T {
 				// TODO, VALID?, Exp: ManuallyDrop::as_ptr
-				&*(self.value.deref() as &T)
+				&*(self.deref() as &T)
 			}
 			
 			#[inline(always)]
 			pub fn as_mut_ptr(&mut self) -> *mut T {
 				// TODO, VALID?, Exp: ManuallyDrop::as_mut_ptr
-				&mut *(self.value.deref_mut() as &mut T)
+				&mut *(self.deref_mut() as &mut T)
 			}
 			
 			#[inline(always)]
 			pub fn as_value(&self) -> &T {
-				&self.value
+				self.deref()
 			}
 			
 			#[inline(always)]
 			pub fn as_mut_value(&mut self) -> &mut T {
-				&mut self.value
+				self.deref_mut()
 			}
 			
+			/// Safe or insecure version of ManuallyDrop.
+			#[inline(always)]
+			pub /*const*/ fn is_safe_type(&self) -> bool {
+				crate::__if_codegen! {
+					if (#$is_safe) {
+						// Safe
+						true
+					} else {
+						// Unsafe
+						false
+					}
+				}
+			}
+			
+			/// Extracts the value from the ManuallyDrop container.
 			#[inline(always)]
 			pub /*const*/ fn into_inner(slot: $current_type<T, Trig>) -> T {
 				let core_inner = Self::into_core_inner(slot);
@@ -175,6 +209,7 @@ macro_rules! __codegen {
 				}
 			}
 			
+			/// Takes the value from the ManuallyDrop<T> container out.
 			#[inline(always)]
 			pub unsafe fn take(slot: &mut $current_type<T, Trig>) -> T {
 				crate::__if_codegen! {
@@ -184,6 +219,18 @@ macro_rules! __codegen {
 				}
 				
 				UnsafeStdManuallyDrop::take(&mut slot.value)
+			}
+			
+			/// Resets the ManuallyDrop state to its original state and returns the previous state.
+			#[inline(always)]
+			pub unsafe fn get_state_and_reset(&self) -> Option<StateManuallyDropData> {
+				crate::__if_codegen! {
+					if (#$is_safe) {
+						Some(self.state.get_and_reset())
+					} else {
+						None
+					}
+				}
 			}
 			
 			#[deprecated(since = "0.1.2", note = "Use `is_next_panic` instead")]
@@ -198,6 +245,9 @@ macro_rules! __codegen {
 				self.is_next_trig()
 			}
 			
+			/// Checking if a trigger that defines undefined behavior will fire. 
+			/// false - means the state is empty and you can work with the value in the future.
+			/// - true means the value has already been converted by some method.
 			#[inline(always)]
 			pub fn is_next_trig(&self) -> bool {
 				crate::__if_codegen! {
@@ -215,6 +265,10 @@ macro_rules! __codegen {
 				self.is_next_trig_optionresult()
 			}
 			
+			/// Checking if a trigger that defines undefined behavior will fire.
+			/// Some(false) - means that the state is empty and you can work with the value later.
+			/// Some(true) means that the value has already been converted by some method, and further work with the value will cause an undefined behavior trigger.
+			/// None - This version of ManuallyDrop is stateless, so defining undefined behavior is not possible.
 			#[inline(always)]
 			pub fn is_next_trig_optionresult(&self) -> Option<bool> {
 				crate::__if_codegen! {
@@ -226,6 +280,7 @@ macro_rules! __codegen {
 				}
 			}
 			
+			/// The version of mem::forget is adapted for safe and insecure ManuallyDrop.
 			#[inline(always)]
 			pub unsafe fn ignore_drop(&self) {
 				crate::__if_codegen! {
@@ -234,9 +289,8 @@ macro_rules! __codegen {
 					}
 				}
 			}
-		}
-		
-		impl<T, Trig> $current_type<T, Trig> where T: ?Sized, Trig: TrigManuallyDrop {
+			
+			/// Manually drops the contained value.
 			#[inline(always)]
 			pub unsafe fn drop(slot: &mut $current_type<T, Trig>) {
 				crate::__if_codegen! {
@@ -246,13 +300,6 @@ macro_rules! __codegen {
 				}
 				
 				UnsafeStdManuallyDrop::drop(&mut slot.value)
-			}
-		}
-		
-		impl<Trig> $current_type<(), Trig> where Trig: TrigManuallyDrop {
-			#[inline(always)]
-			pub /*const*/ fn is_safe_mode() -> bool {
-				crate::core::flags::IS_SAFE_MODE
 			}
 		}
 		
@@ -294,13 +341,13 @@ macro_rules! __codegen {
 		impl<T, Trig, Rhs> PartialEq<Rhs> for $current_type<T, Trig> where T: ?Sized + PartialEq<Rhs>, Trig: TrigManuallyDrop {
 			#[inline]
 			fn eq(&self, a: &Rhs) -> bool {
-				let value: &T = self.value.deref();
+				let value: &T = self.deref();
 				PartialEq::<Rhs>::eq(value, a)
 			}
 			
 			#[inline]
 			fn ne(&self, a: &Rhs) -> bool {
-				let value: &T = self.value.deref();
+				let value: &T = self.deref();
 				PartialEq::<Rhs>::ne(value, a)
 			}
 		}
@@ -308,7 +355,7 @@ macro_rules! __codegen {
 		impl<T, Trig> Eq for $current_type<T, Trig> where T: Eq + PartialEq<$current_type<T, Trig>>, Trig: TrigManuallyDrop {
 			#[inline]
 			fn assert_receiver_is_total_eq(&self) {
-				let value: &T = self.value.deref();
+				let value: &T = self.deref();
 				Eq::assert_receiver_is_total_eq(value)
 			}
 		}
@@ -316,7 +363,7 @@ macro_rules! __codegen {
 		impl<T, Trig> Ord for $current_type<T, Trig> where T: Ord + PartialOrd<$current_type<T, Trig>>, Trig: TrigManuallyDrop {
 			#[inline]
 			fn cmp(&self, a: &Self) -> core::cmp::Ordering {
-				let value: &T = self.value.deref();
+				let value: &T = self.deref();
 				Ord::cmp(value, a)
 			}
 		}
@@ -324,7 +371,7 @@ macro_rules! __codegen {
 		impl<T, Trig, Rhs> PartialOrd<Rhs> for $current_type<T, Trig> where T: ?Sized + PartialOrd<Rhs>, Trig: TrigManuallyDrop {
 			#[inline]
 			fn partial_cmp(&self, a: &Rhs) -> Option<core::cmp::Ordering> {
-				let value: &T = self.value.deref();
+				let value: &T = self.deref();
 				PartialOrd::partial_cmp(value, a)
 			}
 		}
@@ -332,7 +379,7 @@ macro_rules! __codegen {
 		impl<T, Trig> Hash for $current_type<T, Trig> where T: ?Sized + Hash, Trig: TrigManuallyDrop {
 			#[inline]
 			fn hash<H>(&self, a: &mut H) where H: core::hash::Hasher {
-				let value: &T = self.value.deref();
+				let value: &T = self.deref();
 				Hash::hash(value, a)
 			}
 		}
@@ -340,7 +387,7 @@ macro_rules! __codegen {
 		impl<T, Trig> Debug for $current_type<T, Trig> where T: ?Sized + Debug, Trig: TrigManuallyDrop {
 			#[inline(always)]
 			fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-				let value: &T = self.value.deref();
+				let value: &T = self.deref();
 				Debug::fmt(value, f)
 			}
 		}

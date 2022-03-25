@@ -22,6 +22,7 @@ macro_rules! trig_manuallydrop_returntype {
 
 #[cfg(feature = "support_panic_trig")]
 pub mod panic;
+
 #[cfg(feature = "support_count_trig")]
 pub mod counter;
 

@@ -99,7 +99,8 @@ impl StateManuallyDropData {
 	
 	#[inline(always)]
 	const fn __empty() -> Self {
-		Self::Empty
+		let sself = Self::Empty;
+		sself
 	}
 	
 	#[deprecated(since = "0.1.2", note = "Use `empty` instead")]
@@ -234,14 +235,15 @@ impl StateManuallyDrop {
 		}
 	}
 	
-	/// For tests only, resets the MannualuDrop state to the initial state
-	pub unsafe fn flush(&mut self) -> StateManuallyDropData {
-		let result = self.__force_write(
+	/// For tests only, resets the ManuallyDrop state to the initial state
+	pub unsafe fn get_and_reset(&self) -> StateManuallyDropData {
+		let old_value = self.__force_write(
 			StateManuallyDropData::Empty
 		);
+		debug_assert_eq!(self.is_empty(), true);
 		debug_assert_eq!(self.is_next_trig(), false);
 		
-		result
+		old_value
 	}
 	
 	#[inline]
@@ -412,11 +414,33 @@ impl Default for StateManuallyDrop {
 #[cfg(test)]
 #[test]
 fn test_state() {
-	use crate::core::trig::EmptyLoopTrigManuallyDrop;
-
 	let state = StateManuallyDrop::empty();
 	assert_eq!(state.is_empty(), true);
 	assert_eq!(state.is_next_trig(), false);
 	
-	state.deref_or_trig::<EmptyLoopTrigManuallyDrop>(); // ok
+	state.deref_or_trig::<PanicTrigManuallyDrop>(); // ok
 }
+
+#[cfg(test)]
+#[test]
+fn test_reset() {
+	let state = StateManuallyDrop::empty();
+	assert_eq!(state.is_empty(), true);
+	assert_eq!(state.is_next_trig(), false);
+	
+	state.deref_or_trig::<PanicTrigManuallyDrop>(); // ok
+	state.to_dropmode_or_trig::<PanicTrigManuallyDrop>();
+	
+	assert_eq!(state.is_empty(), false);
+	assert_eq!(state.is_next_trig(), true);
+	
+	let old_state = unsafe {
+		state.get_and_reset()
+	};
+	assert_eq!(state.is_empty(), true);
+	assert_eq!(state.is_next_trig(), false);
+	assert_eq!(old_state.is_empty(), false);
+	assert_eq!(old_state.is_next_trig(), true);
+	assert_eq!(old_state, StateManuallyDropData::DropModeTrig);
+}
+

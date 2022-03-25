@@ -31,7 +31,8 @@ pub fn take_hook() -> HookFunction {
 /// Execute a hook function that is always executed in case of undefined behavior of the ManuallyDrop logic.
 #[inline(always)]
 pub fn run_hook<'a>(args: Arguments<'a>) -> trig_manuallydrop_returntype!() {
-	(take_hook())(args)
+	let trig_fn = take_hook();
+	trig_fn(args)
 }
 
 impl TrigManuallyDrop for HookFnTrigManuallyDrop {

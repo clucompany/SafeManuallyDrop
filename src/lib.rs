@@ -15,6 +15,12 @@
 //#Ulin Project 2022
 //
 
+// =============
+// !!ATTENTION!!
+// =============
+// Anything related to deprecated features 
+// will be removed in a future regression release.
+//
 
 #![allow(non_snake_case)]
 
@@ -99,3 +105,11 @@ cfg_if_safemode! {
 	#if_safe(pub type ManuallyDrop<T> = crate::beh::safe::SafeManuallyDrop<T, DefTrigManuallyDrop>;)
 }
 
+impl ManuallyDrop<()> {
+	/// Depending on the build flag, a protected version of ManuallyDrop or 
+	/// an unprotected version of ManuallyDrop with a default trigger.
+	#[inline(always)]
+	pub const fn is_safe_mode() -> bool {
+		crate::core::flags::IS_SAFE_MODE
+	}
+}
