@@ -15,6 +15,7 @@ fn main() {
 		let mut data = ManuallyDrop::new(vec![1, 2, 3, 4]);
 		println!("data: {:?}", data.deref());
 		
+		#[allow(unused_unsafe)] // to avoid warning if the always_compatible_stdapi flag is not used (can be removed)
 		unsafe {
 			assert_eq!(data.is_next_trig(), false); // VALID
 			ManuallyDrop::drop(&mut data); // VALID
@@ -29,8 +30,12 @@ fn main() {
 			ManuallyDrop::drop(&mut data); // INVALID, COMBO DROP
 		}
 	}else {
-		println!("ManuallyDrop has no protections by default,");
-		println!("ManuallyDrop will be the same as in std.");
-		println!("Or use (AlwaysSafeManuallyDrop, PanicManuallyDrop, HookManuallyDrop, CounterManuallyDrop) specific data types with specific behavior.");
+		println!("#[0] ManuallyDrop is an alias for AutoSafeManuallyDrop, ");
+		println!("#[1] ManuallyDrop in the release build has no protection by default,");
+		println!("#[2] if ManuallyDrop is not protected it will be the same as in std.");
+		println!("#[3] To run the protected version, use `cargo run --example easy` or ");
+		println!("`CARGO_PROFILE_RELEASE_DEBUG_ASSERTIONS=\"true\" cargo run --example easy --release`");
+		println!();
+		println!("Or use concrete types instead of auto (AutoSafeManuallyDrop, AutoSafePanicManuallyDrop, AutoSafeHookManuallyDrop, AutoSafeCounterManuallyDrop, AlwaysSafeManuallyDrop, AlwaysSafePanicManuallyDrop, AlwaysSafeHookManuallyDrop, AlwaysSafeCounterManuallyDrop) specific data types with specific behavior.");
 	}
 }

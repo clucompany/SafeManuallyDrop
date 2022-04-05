@@ -64,7 +64,7 @@ pub type DefTrigManuallyDrop = crate::core::trig::count::CounterTrigManuallyDrop
 ))]
 pub type DefTrigManuallyDrop = crate::core::trig::r#loop::EmptyLoopTrigManuallyDrop;
 
-
+/// Whether the default behavior autodetection was used for ManuallyDrop.
 pub const IS_AUTO_DETECT_DEFTRIG: bool = false;
 
 /// The build was done using all-features, the required behavior cannot be determined.

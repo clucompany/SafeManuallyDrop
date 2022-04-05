@@ -12,8 +12,9 @@ fn build_new_test_vec() -> Vec<String> {
 	vec
 }
 
+#[allow(unused_unsafe)]
 mod panic_test_methods {
-	use SafeManuallyDrop::PanicManuallyDrop;
+	use SafeManuallyDrop::AlwaysSafePanicManuallyDrop as PanicManuallyDrop;
 	use core::ops::Deref;
 	use super::build_new_test_vec;
 	
@@ -219,6 +220,7 @@ fn test_thread_drop() {
 	
 	let is_ok = std::thread::spawn(move || {
 		let mut a = a;
+		#[allow(unused_unsafe)]
 		unsafe {
 			ManuallyDrop::drop(&mut a);
 		}

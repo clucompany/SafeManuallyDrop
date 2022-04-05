@@ -1,95 +1,14 @@
 
-#[macro_export]
+/// Depending on the build flag, a protected version of ManuallyDrop or 
+/// an unprotected version of ManuallyDrop with a default trigger.
+pub const IS_SAFE_MODE: bool = crate::ManuallyDrop::is_safe_mode();
+
 #[doc(hidden)]
-macro_rules! cfg_if_safemode {
-	[ #if_safe() { $($all:tt)* } $( else $($else_all:tt)* )? /*$($macros_data:tt)**/ ] => {
-		{
-			#[cfg(
-				any(
-					feature = "always_safe_manuallydrop",
-					all(feature = "always_check_in_case_debug_assertions", debug_assertions),
-				)
-			)] {
-				$($all)*
-			}
-			
-			$(
-				#[cfg(not(
-					any(
-						feature = "always_safe_manuallydrop",
-						all(feature = "always_check_in_case_debug_assertions", debug_assertions),
-					)
-				))] {
-					$($else_all)*
-				}
-			)?
-		}
-		
-		/*$crate::cfg_if_safemode! {
-			$($macros_data)*
-		}*/
-	};
-	
-	[
-		$(#[$($meta:tt)*])*
-		#if_safe ( $($all:tt)* )  $($macros_data:tt)*
-	] => {
-		#[cfg(
-			any(
-				feature = "always_safe_manuallydrop",
-				all(feature = "always_check_in_case_debug_assertions", debug_assertions),
-			)
-		)]
-			$(#[$($meta)*])*
-			$($all)*
-		
-		$crate::cfg_if_safemode! {
-			$($macros_data)*
-		}
-	};
-	
-	[
-		$(#[$($meta:tt)*])*
-		#if_not_safe ( $($all:tt)* )  $($macros_data:tt)*
-	] => {
-		#[cfg(
-			not(
-				any(
-					feature = "always_safe_manuallydrop",
-					all(feature = "always_check_in_case_debug_assertions", debug_assertions),
-				)
-			)
-		)] 
-			$(#[$($meta)*])*
-			$($all)*
-		
-		$crate::cfg_if_safemode! {
-			$($macros_data)*
-		}
-	};
-	
-	[] => {};
-	[ #if_safe { $($all:tt)* } ] => {
-		{
-			#[cfg(
-				any(
-					feature = "always_safe_manuallydrop",
-					all(feature = "always_check_in_case_debug_assertions", debug_assertions)
-				)
-			)] {
-				$($all)*
-			}
-		}
-	};
-}
-
-crate::cfg_if_safemode! {
-	#if_not_safe (pub const IS_SAFE_MODE: bool = false;)
-	#if_safe (pub const IS_SAFE_MODE: bool = true;)
-}
-
 #[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_PANIC_TRIG` instead")]
+/// Whether the library build flag was used to support panic_trig.
 pub const SUPPORT_PANIC_TRIG: bool = IS_SUPPORT_PANIC_TRIG;
+
+/// Whether the library build flag was used to support panic_trig.
 pub const IS_SUPPORT_PANIC_TRIG: bool = {
 	#[cfg(feature = "support_panic_trig")] {
 		true
@@ -100,8 +19,12 @@ pub const IS_SUPPORT_PANIC_TRIG: bool = {
 	}
 };
 
+#[doc(hidden)]
 #[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_HOOKFN_TRIG` instead")]
+/// Whether the library build flag was used to support hookfn_trig.
 pub const SUPPORT_HOOKFN_TRIG: bool = IS_SUPPORT_HOOKFN_TRIG;
+
+/// Whether the library build flag was used to support hookfn_trig.
 pub const IS_SUPPORT_HOOKFN_TRIG: bool = {
 	#[cfg(feature = "support_hookfn_trig")] {
 		true
@@ -112,8 +35,12 @@ pub const IS_SUPPORT_HOOKFN_TRIG: bool = {
 	}
 };
 
+#[doc(hidden)]
 #[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_COUNT_TRIG` instead")]
+/// Whether the library build flag was used to support count_trig.
 pub const SUPPORT_COUNT_TRIG: bool = IS_SUPPORT_COUNT_TRIG;
+
+/// Whether the library build flag was used to support count_trig.
 pub const IS_SUPPORT_COUNT_TRIG: bool = {
 	#[cfg(feature = "support_count_trig")] {
 		true
@@ -124,11 +51,33 @@ pub const IS_SUPPORT_COUNT_TRIG: bool = {
 	}
 };
 
-#[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_EMPTY_TRIG` instead")]
-pub const SUPPORT_EMPTY_TRIG: bool = IS_SUPPORT_EMPTY_TRIG;
-pub const IS_SUPPORT_EMPTY_TRIG: bool = true;
+#[doc(hidden)]
+#[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_LOOP_TRIG` instead")]
+/// Whether the library build flag was used to support empty_trig.
+pub const SUPPORT_EMPTY_TRIG: bool = IS_SUPPORT_LOOP_TRIG;
 
+#[doc(hidden)]
+#[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_LOOP_TRIG` instead")]
+/// Whether the library build flag was used to support empty_trig.
+pub const IS_SUPPORT_EMPTY_TRIG: bool = IS_SUPPORT_LOOP_TRIG;
+
+/// Whether the library build flag was used to support loop_trig.
+pub const IS_SUPPORT_LOOP_TRIG: bool = true;
+
+/// Ability to determine if an empty loop trigger has been executed.
+pub const IS_SUPPORT_LOOP_IS_TRIG: bool = {
+	#[cfg(feature = "support_istrig_loop")] {
+		true
+	}
+	
+	#[cfg(not(feature = "support_istrig_loop"))] {
+		false
+	}
+};
+
+/// Whether the default behavior autodetection was used for ManuallyDrop.
 pub const IS_AUTO_DETECT_DEFTRIG: bool = crate::core::trig::IS_AUTO_DETECT_DEFTRIG;
+
 /// If the build was done using "all functions" (cargo test/doc/build --all-features), the required behavior in a safe mandrop cannot be determined, 
 /// if this flag is active, EmptyLoopTrigManuallyDrop will be used.
 pub const IS_INVALID_AUTO_DETECT_DEFTRIG: bool = crate::core::trig::IS_INVALID_AUTO_DETECT_DEFTRIG;

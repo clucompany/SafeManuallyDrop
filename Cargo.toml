@@ -1,6 +1,6 @@
 [package]
 name = "SafeManuallyDrop"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Denis Kotlyarov <denis2005991@gmail.com>"]
 edition = "2021"
 
@@ -17,6 +17,13 @@ default = [
 	# For compatibility with older software, create a separate crate::core::hook 
 	# instead of the new crate::core::trig::hook.
 	"enable_deprecated_hook",
+	
+	# Mark functions as unsafe even if they are safe 
+	# for standard API compatibility.
+	"always_compatible_stdapi",
+	
+	# Ability to determine if an empty loop trigger has been executed.
+	"support_istrig_loop",
 	
 	# Support for PanicManuallyDrop, in case of undefined behavior 
 	# of PanicManuallyDrop there will be a panic.
@@ -67,8 +74,10 @@ always_safe_manuallydrop = []
 support_hookfn_trig = []
 support_count_trig = []
 support_panic_trig = []
+support_istrig_loop = []
 
 enable_deprecated_hook = []
+always_compatible_stdapi = []
 
 always_deftrig_panic = []
 always_deftrig_hookfn = []

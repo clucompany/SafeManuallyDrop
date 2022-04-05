@@ -15,7 +15,10 @@ pub struct SafeManuallyDrop<T, Trig> where T: ?Sized, Trig: TrigManuallyDrop {
 crate::__codegen! {
 	@use;
 	#SafeManuallyDrop [
-		is_safe: true
+		is_safe: true,
+		is_always_compatible: false,
+		is_maybe_compatible: true,
+		is_repr_transparent: false,
 	];
 }
 
@@ -24,7 +27,7 @@ crate::__codegen! {
 impl<T, Trig> Clone for SafeManuallyDrop<T, Trig> where T: ?Sized + Clone, Trig: TrigManuallyDrop {
 	#[inline(always)]
 	fn clone(&self) -> Self {
-		let ref_value: &T = self.value.deref();
+		let ref_value: &T = self.deref();
 		let state = self.state.clone();
 		
 		Self {

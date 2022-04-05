@@ -1,11 +1,12 @@
 
-use SafeManuallyDrop::PanicManuallyDrop as ManuallyDrop;
+use SafeManuallyDrop::AutoSafePanicManuallyDrop as ManuallyDrop;
 use std::ops::Deref;
 
 fn main() {
 	let mut data = ManuallyDrop::new(vec![1, 2, 3, 4]);
 	println!("data: {:?}", data.deref());
 	
+	#[allow(unused_unsafe)] // to avoid warning if the always_compatible_stdapi flag is not used (can be removed)
 	unsafe {
 		assert_eq!(data.is_next_trig(), false); // VALID
 		ManuallyDrop::drop(&mut data); // VALID

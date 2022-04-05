@@ -13,16 +13,11 @@ pub struct UnsafeManuallyDrop<T, Trig> where T: ?Sized, Trig: TrigManuallyDrop {
 crate::__codegen! {
 	@use;
 	#UnsafeManuallyDrop [
-		is_safe: false
+		is_safe: false,
+		is_always_compatible: true,
+		is_maybe_compatible: true,
+		is_repr_transparent: true,
 	];
-}
-
-impl<T, Trig> UnsafeManuallyDrop<T, Trig> where T: ?Sized + Clone, Trig: TrigManuallyDrop {
-	/// For tests only, resets the MannualuDrop state to the initial state
-	#[inline(always)]
-	pub unsafe fn flush(&mut self) -> StateManuallyDropData {
-		StateManuallyDropData::empty()
-	}
 }
 
 impl<T, Trig> Copy for UnsafeManuallyDrop<T, Trig> where T: ?Sized + Copy, Trig: TrigManuallyDrop {}
@@ -30,8 +25,9 @@ impl<T, Trig> Copy for UnsafeManuallyDrop<T, Trig> where T: ?Sized + Copy, Trig:
 impl<T, Trig> Clone for UnsafeManuallyDrop<T, Trig> where T: ?Sized + Clone, Trig: TrigManuallyDrop {
 	#[inline(always)]
 	fn clone(&self) -> Self {
-		Self::new(
-			Clone::clone(&self.value)
-		)
+		let ref_value = &self.value as &T;
+		let value = Clone::clone(ref_value);
+		
+		Self::new(value)
 	}
 }

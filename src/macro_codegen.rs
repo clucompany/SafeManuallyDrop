@@ -1,4 +1,6 @@
 
+/// Conditional code generation in case 
+/// the structure is safe or unsafe 
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __if_codegen {
@@ -7,28 +9,120 @@ macro_rules! __if_codegen {
 			$($all:tt)*
 		} $(else {
 			$($else:tt)*
-		})*
+		})?
 	] => {
-		$($all)*
+		$( $all )?
 	};
+	
 	[
 		if ( #false ) {
 			$($all:tt)*
 		} $(else {
 			$($else:tt)*
-		})*
+		})?
 	] => {
-		$( $($else)* )*
+		$( $($else)* )?
 	};
+	
+	($($all:tt)*) => {
+		compile_error!(
+			concat!(
+				"Please check the spelling of the macro, body: '",
+				stringify!($($all)*),
+				"'"
+			)
+		);
+	}
 }
 
+/// Conditional code generation if standard library compatibility 
+/// is enabled and whether the framework is safe or unsafe.
+#[doc(hidden)]
+#[macro_export]
+#[cfg(feature = "always_compatible_stdapi")]
+macro_rules! __codegen_compatible_stdapi_ornot {
+	(
+		#if_compatible_stdapi_and_safeapi (#is_always_compatible: true || ( #is_feature && #is_maybe_compatible: $_is_maybe_compatible:tt)) {
+			$($true_code:tt)*
+		} $(else { $( $false_code:tt)* })?
+	) => {
+		$($true_code)* // <--
+	};
+	(
+		#if_compatible_stdapi_and_safeapi (#is_always_compatible: $_is_always_compatible:tt || ( #is_feature && #is_maybe_compatible: true)) {
+			$($true_code:tt)*
+		} $(else { $( $false_code:tt)* })?
+	) => {
+		$($true_code)* // <--
+	};
+	(
+		#if_compatible_stdapi_and_safeapi (#is_always_compatible: $_is_always_compatible:tt || ( #is_feature && #is_maybe_compatible: false)) {
+			$($true_code:tt)*
+		} $(else { $( $false_code:tt)* })?
+	) => {
+		$( $($false_code)* )?
+	};
+	
+	($($all:tt)*) => {
+		compile_error!(
+			concat!(
+				"Please check the spelling of the macro, body: '",
+				stringify!($($all)*),
+				"'"
+			)
+		);
+	}
+}
 
+/// Conditional code generation if standard library compatibility 
+/// is enabled and whether the framework is safe or unsafe.
+#[doc(hidden)]
+#[macro_export]
+#[cfg(not(feature = "always_compatible_stdapi"))]
+macro_rules! __codegen_compatible_stdapi_ornot {
+	(
+		#if_compatible_stdapi_and_safeapi (#is_always_compatible: true || ( #is_feature && #is_maybe_compatible: $_is_maybe_compatible:tt)) {
+			$($true_code:tt)*
+		} $(else { $( $false_code:tt)* })?
+	) => {
+		$($true_code)* // <--
+	};
+	(
+		#if_compatible_stdapi_and_safeapi (#is_always_compatible: $_is_always_compatible:tt || ( #is_feature && #is_maybe_compatible: true)) {
+			$($true_code:tt)*
+		} $(else { $( $false_code:tt)* })?
+	) => {
+		$( $($false_code)* )?
+	};
+	(
+		#if_compatible_stdapi_and_safeapi (#is_always_compatible: $_is_always_compatible:tt || ( #is_feature && #is_maybe_compatible: false)) {
+			$($true_code:tt)*
+		} $(else { $( $false_code:tt)* })?
+	) => {
+		$( $($false_code)* )?
+	};
+	
+	($($all:tt)*) => {
+		compile_error!(
+			concat!(
+				"Please check the spelling of the macro, body: '",
+				stringify!($($all)*),
+				"'"
+			)
+		);
+	}
+}
+
+/// Internal code generation is needed more for compatibility 
+/// and bypassing trait restrictions.
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __codegen {
 	[
 		@use;
-		$($($all:tt)+)?
+		$(
+			$($all:tt)+
+		)?
 	] => {
 		use crate::core::state::StateManuallyDropData;
 		#[allow(unused_imports)]
@@ -44,11 +138,17 @@ macro_rules! __codegen {
 			}
 		)?
 	};
+	
 	[
 		#$current_type: tt [
-			is_safe: $is_safe:tt
+			is_safe: $is_safe:tt,
+			is_always_compatible: $is_always_compatible: tt,
+			is_maybe_compatible: $is_maybe_compatible: tt,
+			is_repr_transparent: $is_repr_transparent: tt $(,)?
 		];
-		$($($all:tt)+)?
+		$(
+			$($all:tt)+
+		)?
 	] => {
 		impl<T, Trig> $current_type<T, Trig> where Trig: TrigManuallyDrop {
 			// Safe
@@ -80,10 +180,223 @@ macro_rules! __codegen {
 			#[inline(always)]
 			pub fn forget(value: T) {
 				let sself = Self::new(value);
+				
+				#[allow(unused_unsafe)]
 				unsafe {
 					sself.ignore_drop();
 				}
 			}
+			
+			
+			
+			/// Extracts the value from the ManuallyDrop container.
+			#[inline(always)]
+			pub /*const*/ fn into_inner(slot: $current_type<T, Trig>) -> T {
+				let core_inner = Self::into_core_inner(slot);
+					
+				UnsafeStdManuallyDrop::into_inner(core_inner)
+			}
+			
+			#[inline]
+			pub /*const*/ fn into_core_inner(slot: $current_type<T, Trig>) -> UnsafeStdManuallyDrop<T> {
+				crate::__if_codegen! {
+					if (#$is_safe) {
+						slot.state.to_intoinnermode_or_trig::<Trig>();
+						
+						// analog UnsafeManuallyDrop::take
+						let result: UnsafeStdManuallyDrop<T> = unsafe {
+							::core::ptr::read(&slot.value as _)
+						};
+						
+						let _ignore_drop = UnsafeStdManuallyDrop::new(slot);
+						result
+					}else {
+						slot.value
+					}
+				}
+			}
+			
+			
+			// TODO! duplication of code, it could have been solved if the rust would allow 
+			// it to be done somehow differently, but at this stage it’s the only way.
+			$crate::__codegen_compatible_stdapi_ornot! {
+				#if_compatible_stdapi_and_safeapi (#is_always_compatible: $is_always_compatible || ( #is_feature && #is_maybe_compatible: $is_maybe_compatible)) {
+					/// Takes the value from the ManuallyDrop<T> container out.
+					#[inline(always)]
+					pub unsafe fn take(slot: &mut $current_type<T, Trig>) -> T {
+						crate::__if_codegen! {
+							if (#$is_safe) {
+								slot.state.to_takemode_or_trig::<Trig>();
+							}
+						}
+						
+						UnsafeStdManuallyDrop::take(&mut slot.value)
+					}
+				} else {
+					/// Takes the value from the ManuallyDrop<T> container out.
+					#[inline(always)]
+					pub fn take(slot: &mut $current_type<T, Trig>) -> T {
+						crate::__if_codegen! {
+							if (#$is_safe) {
+								slot.state.to_takemode_or_trig::<Trig>();
+							}
+						}
+						
+						unsafe { // library provides security guarantees
+							UnsafeStdManuallyDrop::take(&mut slot.value)
+						}
+					}
+				}
+			}
+			
+			
+		}
+		
+		impl<T, Trig> $current_type<T, Trig> where T: ?Sized, Trig: TrigManuallyDrop {
+			// TODO! duplication of code, it could have been solved if the rust would allow 
+			// it to be done somehow differently, but at this stage it’s the only way.
+			$crate::__codegen_compatible_stdapi_ornot! {
+				#if_compatible_stdapi_and_safeapi (#is_always_compatible: $is_always_compatible || ( #is_feature && #is_maybe_compatible: $is_maybe_compatible)) {
+					/// Get reference to value.
+					#[inline(always)]
+					pub unsafe fn as_value(&self) -> &T {
+						crate::__if_codegen! {
+							if (#$is_safe) {
+								self.state.deref_or_trig::<Trig>();
+							}
+						}
+						
+						self.force_as_value()
+					}
+					
+					/// Get a mutable reference to a value.
+					#[inline(always)]
+					pub unsafe fn as_mut_value(&mut self) -> &mut T {
+						crate::__if_codegen! {
+							if (#$is_safe) {
+								self.state.deref_or_trig::<Trig>();
+							}
+						}
+						
+						self.force_as_mut_value()
+					}
+					
+					/// PSEUDO SAFE! In safe ManuallyDrop, this function prevents undefined behavior at run time, 
+					/// but the resulting raw pointer is not protected and does not depend on lifetime 
+					/// and may be dangling.
+					#[inline(always)]
+					pub unsafe fn as_ptr(&self) -> *const T {
+						// TODO, VALID?, Exp: ManuallyDrop::as_ptr
+						self.as_value() as _
+					}
+					
+					/// PSEUDO SAFE! In safe ManuallyDrop, this function prevents undefined behavior at run time, 
+					/// but the resulting raw pointer is not protected and does not depend on lifetime 
+					/// and may be dangling.
+					#[inline(always)]
+					pub unsafe fn as_mut_ptr(&mut self) -> *mut T {
+						// TODO, VALID?, Exp: ManuallyDrop::as_mut_ptr
+						self.as_mut_value() as _
+					}
+					
+					/// Manually drops the contained value.
+					#[inline(always)]
+					pub unsafe fn drop(slot: &mut $current_type<T, Trig>) {
+						crate::__if_codegen! {
+							if (#$is_safe) {
+								slot.state.to_dropmode_or_trig::<Trig>();
+							}
+						}
+						
+						UnsafeStdManuallyDrop::drop(&mut slot.value)
+					}
+					
+					/// Note that the safe ManuallyDrop checks to see if the value is freed when the safe ManuallyDrop struct dies.
+					/// The version of mem::forget is adapted for safe and insecure ManuallyDrop.
+					#[inline(always)]
+					pub unsafe fn ignore_drop(&self) {
+						crate::__if_codegen! {
+							if (#$is_safe) {
+								self.state.to_ignore_trig_when_drop::<Trig>();
+							}
+						}
+					}
+				} else {
+					/// Get reference to value.
+					#[inline(always)]
+					pub fn as_value(&self) -> &T {
+						crate::__if_codegen! {
+							if (#$is_safe) {
+								self.state.deref_or_trig::<Trig>();
+							}
+						}
+						
+						unsafe {
+							self.force_as_value()
+						}
+					}
+					
+					/// Get a mutable reference to a value.
+					#[inline(always)]
+					pub fn as_mut_value(&mut self) -> &mut T {
+						crate::__if_codegen! {
+							if (#$is_safe) {
+								self.state.deref_or_trig::<Trig>();
+							}
+						}
+						
+						unsafe {
+							self.force_as_mut_value()
+						}
+					}
+					
+					/// PSEUDO SAFE! In safe ManuallyDrop, this function prevents undefined behavior at run time, 
+					/// but the resulting raw pointer is not protected and does not depend on lifetime 
+					/// and may be dangling.
+					#[inline(always)]
+					pub fn as_ptr(&self) -> *const T {
+						// TODO, VALID?, Exp: ManuallyDrop::as_ptr
+						self.as_value() as _
+					}
+					
+					/// PSEUDO SAFE! In safe ManuallyDrop, this function prevents undefined behavior at run time, 
+					/// but the resulting raw pointer is not protected and does not depend on lifetime 
+					/// and may be dangling.
+					#[inline(always)]
+					pub fn as_mut_ptr(&mut self) -> *mut T {
+						// TODO, VALID?, Exp: ManuallyDrop::as_mut_ptr
+						self.as_mut_value() as _
+					}
+					
+					/// Manually drops the contained value.
+					#[inline(always)]
+					pub fn drop(slot: &mut $current_type<T, Trig>) {
+						crate::__if_codegen! {
+							if (#$is_safe) {
+								slot.state.to_dropmode_or_trig::<Trig>();
+							}
+						}
+						
+						unsafe { // library provides security guarantees
+							UnsafeStdManuallyDrop::drop(&mut slot.value)
+						}
+					}
+					
+					/// Note that the safe ManuallyDrop checks to see if the value is freed when the safe ManuallyDrop struct dies.
+					/// The version of mem::forget is adapted for safe and insecure ManuallyDrop.
+					#[inline(always)]
+					pub fn ignore_drop(&self) {
+						crate::__if_codegen! {
+							if (#$is_safe) {
+								self.state.to_ignore_trig_when_drop::<Trig>();
+							}
+						}
+					}
+				}
+				
+			}
+			
+			
 			
 			#[inline(always)]
 			pub unsafe fn as_unsafestd_manuallydrop(&self) -> &UnsafeStdManuallyDrop<T> {
@@ -99,15 +412,7 @@ macro_rules! __codegen {
 			/// value with no false data. 
 			#[inline(always)]
 			pub fn is_repr_transparent(&self) -> bool {
-				crate::__if_codegen! {
-					if (#$is_safe) {
-						// Safe
-						false
-					} else {
-						// Unsafe
-						true
-					}
-				}
+				$is_repr_transparent
 			}
 			
 			#[inline]
@@ -123,6 +428,7 @@ macro_rules! __codegen {
 				}
 			}
 			
+			#[doc(hidden)]
 			#[deprecated(since = "0.1.2", note = "Use `is_empty_state` instead")]
 			#[inline(always)]
 			pub fn is_def_state(&self) -> Option<bool> {
@@ -131,8 +437,10 @@ macro_rules! __codegen {
 			
 			/// Checking if a trigger that defines undefined behavior will fire.
 			/// Some(true) - means that the state is empty and you can work with the value later.
-			/// Some(false) means that the value has already been converted by some method, and further work with the value will cause an undefined behavior trigger.
-			/// None - This version of ManuallyDrop is stateless, so defining undefined behavior is not possible.
+			/// Some(false) means that the value has already been converted by some method, and 
+			/// further work with the value will cause an undefined behavior trigger.
+			/// None - This version of ManuallyDrop is stateless, so defining undefined behavior 
+			/// is not possible.
 			#[inline]
 			pub fn is_empty_state(&self) -> Option<bool> {
 				crate::__if_codegen! {
@@ -146,27 +454,32 @@ macro_rules! __codegen {
 				}
 			}
 			
+			/// Get a raw pointer to a value. The call is always insecure.
 			#[inline(always)]
-			pub fn as_ptr(&self) -> *const T {
+			pub unsafe fn force_as_ptr(&self) -> *const T {
 				// TODO, VALID?, Exp: ManuallyDrop::as_ptr
-				&*(self.deref() as &T)
+				self.force_as_value() as _
 			}
 			
+			/// Get a raw mut pointer to a value. The call is always insecure.
 			#[inline(always)]
-			pub fn as_mut_ptr(&mut self) -> *mut T {
+			pub unsafe fn force_as_mut_ptr(&mut self) -> *mut T {
 				// TODO, VALID?, Exp: ManuallyDrop::as_mut_ptr
-				&mut *(self.deref_mut() as &mut T)
+				self.force_as_mut_value() as _
+			}
+
+			/// Get reference to value. Always unprotected!
+			#[inline(always)]
+			pub unsafe fn force_as_value(&self) -> &T {
+				self.value.deref()
 			}
 			
+			/// Get a mutable reference to a value. Always unprotected!
 			#[inline(always)]
-			pub fn as_value(&self) -> &T {
-				self.deref()
+			pub unsafe fn force_as_mut_value(&mut self) -> &mut T {
+				self.value.deref_mut()
 			}
 			
-			#[inline(always)]
-			pub fn as_mut_value(&mut self) -> &mut T {
-				self.deref_mut()
-			}
 			
 			/// Safe or insecure version of ManuallyDrop.
 			#[inline(always)]
@@ -182,45 +495,6 @@ macro_rules! __codegen {
 				}
 			}
 			
-			/// Extracts the value from the ManuallyDrop container.
-			#[inline(always)]
-			pub /*const*/ fn into_inner(slot: $current_type<T, Trig>) -> T {
-				let core_inner = Self::into_core_inner(slot);
-					
-				UnsafeStdManuallyDrop::into_inner(core_inner)
-			}
-			
-			#[inline(always)]
-			pub /*const*/ fn into_core_inner(slot: $current_type<T, Trig>) -> UnsafeStdManuallyDrop<T> {
-				crate::__if_codegen! {
-					if (#$is_safe) {
-						slot.state.to_intoinnermode_or_trig::<Trig>();
-						
-						// analog UnsafeManuallyDrop::take
-						let result: UnsafeStdManuallyDrop<T> = unsafe {
-							::core::ptr::read(&slot.value)
-						};
-						
-						let _ignore_drop = UnsafeStdManuallyDrop::new(slot);
-						result
-					}else {
-						slot.value
-					}
-				}
-			}
-			
-			/// Takes the value from the ManuallyDrop<T> container out.
-			#[inline(always)]
-			pub unsafe fn take(slot: &mut $current_type<T, Trig>) -> T {
-				crate::__if_codegen! {
-					if (#$is_safe) {
-						slot.state.to_takemode_or_trig::<Trig>();
-					}
-				}
-				
-				UnsafeStdManuallyDrop::take(&mut slot.value)
-			}
-			
 			/// Resets the ManuallyDrop state to its original state and returns the previous state.
 			#[inline(always)]
 			pub unsafe fn get_state_and_reset(&self) -> Option<StateManuallyDropData> {
@@ -233,13 +507,21 @@ macro_rules! __codegen {
 				}
 			}
 			
+			/// Checking if a trigger that defines undefined behavior will fire. 
+			/// false - means the state is empty and you can work with the value in the future.
+			/// - true means the value has already been converted by some method.
 			#[deprecated(since = "0.1.2", note = "Use `is_next_panic` instead")]
+			#[doc(hidden)]
 			#[inline(always)]
 			pub fn is_maybe_next_panic(&self) -> bool {
 				self.is_next_trig()
 			}
 			
+			/// Checking if a trigger that defines undefined behavior will fire. 
+			/// false - means the state is empty and you can work with the value in the future.
+			/// - true means the value has already been converted by some method.
 			#[deprecated(since = "0.1.2", note = "Use `is_next_trig` instead")]
+			#[doc(hidden)]
 			#[inline(always)]
 			pub fn is_next_panic(&self) -> bool {
 				self.is_next_trig()
@@ -259,7 +541,12 @@ macro_rules! __codegen {
 				}
 			}
 			
+			/// Checking if a trigger that defines undefined behavior will fire.
+			/// Some(false) - means that the state is empty and you can work with the value later.
+			/// Some(true) means that the value has already been converted by some method, and further work with the value will cause an undefined behavior trigger.
+			/// None - This version of ManuallyDrop is stateless, so defining undefined behavior is not possible.
 			#[deprecated(since = "0.1.2", note = "Use `is_next_trig_optionresult` instead")]
+			#[doc(hidden)]
 			#[inline(always)]
 			pub fn is_next_panic_optionresult(&self) -> Option<bool> {
 				self.is_next_trig_optionresult()
@@ -280,27 +567,6 @@ macro_rules! __codegen {
 				}
 			}
 			
-			/// The version of mem::forget is adapted for safe and insecure ManuallyDrop.
-			#[inline(always)]
-			pub unsafe fn ignore_drop(&self) {
-				crate::__if_codegen! {
-					if (#$is_safe) {
-						self.state.to_ignore_trig_when_drop::<Trig>();
-					}
-				}
-			}
-			
-			/// Manually drops the contained value.
-			#[inline(always)]
-			pub unsafe fn drop(slot: &mut $current_type<T, Trig>) {
-				crate::__if_codegen! {
-					if (#$is_safe) {
-						slot.state.to_dropmode_or_trig::<Trig>();
-					}
-				}
-				
-				UnsafeStdManuallyDrop::drop(&mut slot.value)
-			}
 		}
 		
 		impl<T, Trig> Deref for $current_type<T, Trig> where T: ?Sized, Trig: TrigManuallyDrop {
@@ -308,33 +574,28 @@ macro_rules! __codegen {
 			
 			#[inline(always)]
 			fn deref(&self) -> &T {
-				crate::__if_codegen! {
-					if (#$is_safe) {
-						self.state.deref_or_trig::<Trig>();
-					}
+				#[allow(unused_unsafe)]
+				unsafe {
+					self.as_value()
 				}
-				
-				self.value.deref()
 			}
 		}
 		 
 		impl<T, Trig> DerefMut for $current_type<T, Trig> where T: ?Sized, Trig: TrigManuallyDrop {
 			#[inline(always)]
 			fn deref_mut(&mut self) -> &mut T {
-				crate::__if_codegen! {
-					if (#$is_safe) {
-						self.state.deref_or_trig::<Trig>();
-					}
+				#[allow(unused_unsafe)]
+				unsafe {
+					self.as_mut_value()
 				}
-				
-				self.value.deref_mut()
 			}
 		}
 		
 		impl<T, Trig> Default for $current_type<T, Trig> where T: ?Sized + Default, Trig: TrigManuallyDrop {
 			#[inline(always)]
 			fn default() -> Self {
-				Self::new(Default::default())
+				let value = Default::default();
+				Self::new(value)
 			}
 		}
 		
@@ -392,6 +653,13 @@ macro_rules! __codegen {
 			}
 		}
 		
+		impl<T, Trig> From<T> for $current_type<T, Trig> where T: Sized, Trig: TrigManuallyDrop {
+			#[inline(always)]
+			fn from(a: T) -> Self {
+				$current_type::new(a)
+			}
+		}
+		
 		$(
 			$crate::__codegen! {
 				$($all)+
@@ -399,5 +667,13 @@ macro_rules! __codegen {
 		)?
 	};
 	
-	//[] => {}
+	($($all:tt)*) => {
+		compile_error!(
+			concat!(
+				"Please check the spelling of the macro, body: '",
+				stringify!($($all)*),
+				"'"
+			)
+		);
+	}
 }
