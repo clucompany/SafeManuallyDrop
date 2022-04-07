@@ -1,8 +1,16 @@
 [package]
 name = "SafeManuallyDrop"
 version = "0.1.7"
-authors = ["Denis Kotlyarov <denis2005991@gmail.com>"]
+authors = ["Denis Kotlyarov (Денис Котляров) <denis2005991@gmail.com>"]
+repository = "https://github.com/clucompany/SafeManuallyDrop.git"
 edition = "2021"
+
+license = "Apache-2.0"
+readme = "README.md"
+
+description = "A safe version of ManuallyDrop with various features and options to track undefined behavior when working with ManuallyDrop."
+keywords = ["safe_manually_drop", "safemanuallydrop", "SafeManuallyDrop", "no_std", "clucompany"]
+categories = ["development-tools"]
 
 [features]
 default = [
@@ -10,7 +18,7 @@ default = [
 	# is active (test build, debug build).
 	"always_check_in_case_debug_assertions", 
 	
-	# The ManuallyDrop type is always SafeManuallyDrop, 
+	# The AutoSafeManuallyDrop/ManuallyDrop type is always SafeManuallyDrop, 
 	# i.e. with traceable behavior.
 	#"always_safe_manuallydrop",
 	
@@ -19,7 +27,7 @@ default = [
 	"enable_deprecated_hook",
 	
 	# Mark functions as unsafe even if they are safe 
-	# for standard API compatibility.
+	# for std API compatibility.
 	"always_compatible_stdapi",
 	
 	# Ability to determine if an empty loop trigger has been executed.
@@ -37,24 +45,24 @@ default = [
 	# CounterManuallyDrop will add +1 to the counter.
 	#"support_count_trig" #,
 	
-	# The behavior for the simple ManuallyDrop type will always 
+	# The behavior for the simple AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop type will always 
 	# cause a panic in case of undefined behavior.
 	#"always_deftrig_panic",
 	
-	# The behavior for the simple ManuallyDrop type will always 
+	# The behavior for the simple AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop type will always 
 	# call the hook function in case of undefined behavior.
 	#"always_deftrig_hookfn",
 	
-	# The behavior for the simple ManuallyDrop type will always call 
+	# The behavior for the simple AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop type will always call 
 	# the +1 counter function in case of undefined behavior.
 	#"always_deftrig_count",
 	
-	# The behavior for the simple type ManuallyDrop will always call 
+	# The behavior for the simple type AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop will always call 
 	# the eternal loop function in case of undefined behavior.
 	#"always_deftrig_loop"
 	
 	# INFO:
-	# If the behavior for the general MannuallyDrop is not fixed, 
+	# If the behavior for the general AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop is not fixed, 
 	# the behavior will be determined according to the following scheme:
 	#
 	#	always_deftrig_panic not exists AND

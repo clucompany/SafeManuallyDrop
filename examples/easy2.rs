@@ -1,5 +1,5 @@
 
-use SafeManuallyDrop::AutoSafePanicManuallyDrop as ManuallyDrop;
+use SafeManuallyDrop::AlwaysSafePanicManuallyDrop as ManuallyDrop;
 use std::ops::Deref;
 
 fn main() {
@@ -16,7 +16,7 @@ fn main() {
 		/*
 			thread 'main' panicked at 'Undefined behavior when using 
 			ManuallyDrop(combo_replace_manudropstate), instead of the expected default 
-			state, the current state: DropModeTrig.', src/core/trig/hook.rs:14:5
+			state, the current state: DropModeTrig.'.
 		*/
 		ManuallyDrop::drop(&mut data); // INVALID, COMBO DROP
 	}
