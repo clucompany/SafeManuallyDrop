@@ -6,8 +6,6 @@
 
 A safe version of ManuallyDrop with various features and options to track undefined behavior when working with ManuallyDrop.
 
-A safe version of ManuallyDrop with various features and options to track undefined behavior when working with ManuallyDrop.
-
 # Use
 
 ### 1. easy
@@ -222,8 +220,6 @@ fn main() {
 // 		Loop
 // 
 ```
-
-*/
 
 # License
 
