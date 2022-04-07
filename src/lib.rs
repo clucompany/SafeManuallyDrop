@@ -23,7 +23,7 @@ A safe version of ManuallyDrop with various features and options to track undefi
 
 ### 1. easy
 
-```rust
+```should_panic
 use SafeManuallyDrop::ManuallyDrop;
 use std::ops::Deref;
 
@@ -170,7 +170,7 @@ fn main() {
 
 # cargo.toml -> features
 
-```
+```ignore
 // The ManuallyDrop type is always SafeManuallyDrop if the debug_assertions flag 
 // is active (test build, debug build).
 "always_check_in_case_debug_assertions"
@@ -382,7 +382,7 @@ pub type AutoSafeEmptyLoopManuallyDrop<T> = crate::core::trig::r#loop::AutoSafeE
 /// an unprotected version of ManuallyDrop with a default trigger.
 /// 
 /// features:
-/// ```
+/// ```ignore
 /// if always_safe_manuallydrop | ( always_check_in_case_debug_assertions && debug_assertions ) -> SafeManuallyDrop
 /// else -> UnsafeManuallyDrop
 /// ```

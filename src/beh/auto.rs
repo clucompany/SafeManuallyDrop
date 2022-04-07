@@ -4,16 +4,16 @@
 /// 
 ///	example0:
 ///	```rust
-///	cfg_if_safemode! {
+///	SafeManuallyDrop::cfg_if_safemode! {
 ///		// Unsafe
 ///		// Depending on the build flag, a protected version of ManuallyDrop or 
 ///		// an unprotected version of ManuallyDrop with a default trigger.
-///		#if_not_safe(pub type ManuallyDrop<T> = crate::beh::r#unsafe::UnsafeManuallyDrop<T, crate::core::trig::DefTrigManuallyDrop>;)
+///		#if_not_safe(pub type ManuallyDrop<T> = SafeManuallyDrop::beh::r#unsafe::UnsafeManuallyDrop<T, SafeManuallyDrop::core::trig::DefTrigManuallyDrop>;)
 ///
 ///		// Safe
 ///		// Depending on the build flag, a protected version of ManuallyDrop or 
 ///		// an unprotected version of ManuallyDrop with a default trigger.
-///		#if_safe(pub type ManuallyDrop<T> = crate::beh::safe::SafeManuallyDrop<T, crate::core::trig::DefTrigManuallyDrop>;)
+///		#if_safe(pub type ManuallyDrop<T> = SafeManuallyDrop::beh::safe::SafeManuallyDrop<T, SafeManuallyDrop::core::trig::DefTrigManuallyDrop>;)
 ///	}
 ///	```
 /// 
@@ -23,7 +23,7 @@
 ///	// an unprotected version of ManuallyDrop with a default trigger.
 ///	#[inline(always)]
 ///	pub const fn is_safe_mode() -> bool {
-///		cfg_if_safemode! {
+///		SafeManuallyDrop::cfg_if_safemode! {
 ///			#if_safe() {
 ///				true
 ///			}else {
@@ -118,19 +118,19 @@ macro_rules! cfg_if_safemode {
 }
 
 // TODO, MANYCOPYCODE
-crate::cfg_if_safemode! {
+cfg_if_safemode! {
 	// Unsafe
 	/// Depending on the build flag, a protected version of ManuallyDrop or 
 	/// an unprotected version of ManuallyDrop with a default trigger.
 	/// 
 	/// features:
-	/// ```
+	/// ```ignore
 	/// if always_safe_manuallydrop | ( always_check_in_case_debug_assertions && debug_assertions ) -> SafeManuallyDrop
 	/// else -> UnsafeManuallyDrop
 	/// ```
 	/// 
 	/// current: 
-	/// ```
+	/// ```ignore
 	/// UnsafeManuallyDrop
 	/// ```
 	#if_not_safe(pub type AutoSafeManuallyDrop<T, Trig> = crate::beh::r#unsafe::UnsafeManuallyDrop<T, Trig>;)
@@ -140,13 +140,13 @@ crate::cfg_if_safemode! {
 	/// an unprotected version of ManuallyDrop with a default trigger.
 	/// 
 	/// features:
-	/// ```
+	/// ```ignore
 	/// if always_safe_manuallydrop | ( always_check_in_case_debug_assertions && debug_assertions ) -> SafeManuallyDrop
 	/// else -> UnsafeManuallyDrop
 	/// ```
 	/// 
 	/// current: 
-	/// ```
+	/// ```ignore
 	/// SafeManuallyDrop
 	/// ```
 	#if_safe(pub type AutoSafeManuallyDrop<T, Trig> = crate::beh::safe::SafeManuallyDrop<T, Trig>;)
