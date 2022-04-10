@@ -1,7 +1,7 @@
 # SafeManuallyDrop
-[![Build Status](https://travis-ci.org/clucompany/SafeManuallyDrop.svg?branch=master)](https://travis-ci.org/clucompany/SafeManuallyDrop)
+[![CI](https://github.com/clucompany/SafeManuallyDrop/actions/workflows/CI.yml/badge.svg?event=push)](https://github.com/clucompany/SafeManuallyDrop/actions/workflows/CI.yml)
 [![Apache licensed](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
-[![crates.io](http://meritbadge.herokuapp.com/SafeManuallyDrop)](https://crates.io/crates/SafeManuallyDrop)
+[![crates.io](https://img.shields.io/crates/v/SafeManuallyDrop)](https://crates.io/crates/SafeManuallyDrop)
 [![Documentation](https://docs.rs/SafeManuallyDrop/badge.svg)](https://docs.rs/SafeManuallyDrop)
 
 A safe version of ManuallyDrop with various features and options to track undefined behavior when working with ManuallyDrop.
