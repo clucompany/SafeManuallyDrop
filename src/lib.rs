@@ -282,6 +282,7 @@ pub use crate::core::state as state;
 #[doc(hidden)]
 #[deprecated(since = "0.1.5", note = "Use `SafeManuallyDrop::core::hook` instead")]
 #[allow(deprecated)]
+#[cfg(feature = "enable_deprecated_hook")]
 pub use crate::core::hook as hook;
 
 #[doc(hidden)]

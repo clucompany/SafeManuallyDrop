@@ -491,7 +491,7 @@ impl Default for StateManuallyDrop {
 	}
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "support_panic_trig"))]
 #[test]
 fn test_state() {
 	let state = StateManuallyDrop::empty();
@@ -501,7 +501,7 @@ fn test_state() {
 	state.deref_or_trig::<PanicTrigManuallyDrop>(); // ok
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "support_panic_trig"))]
 #[test]
 fn test_reset() {
 	let state = StateManuallyDrop::empty();

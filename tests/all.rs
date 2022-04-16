@@ -12,6 +12,7 @@ fn build_new_test_vec() -> Vec<String> {
 	vec
 }
 
+#[cfg(feature = "support_panic_trig")]
 #[allow(unused_unsafe)]
 mod panic_test_methods {
 	use SafeManuallyDrop::AlwaysSafePanicManuallyDrop as PanicManuallyDrop;
@@ -160,6 +161,7 @@ mod panic_test_methods {
 	}
 }
 
+#[cfg(all(test, feature = "support_panic_trig"))]
 #[test]
 fn test_panic_mode() {
 	static mut PANIC_COUNTER: usize = 0;
