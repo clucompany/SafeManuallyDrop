@@ -14,29 +14,44 @@ pub struct SafeManuallyDrop<T, Trig> where T: ?Sized, Trig: TrigManuallyDrop {
 
 crate::__codegen! {
 	@use;
-	#SafeManuallyDrop [
+	@impl SafeManuallyDrop {
 		is_safe: true,
 		is_always_compatible: false,
 		is_maybe_compatible: true,
 		is_repr_transparent: false,
-	];
-}
-
-//impl<T> Copy for ManuallyDrop<T> where T: ?Sized + Copy {} TODO
-
-impl<T, Trig> Clone for SafeManuallyDrop<T, Trig> where T: ?Sized + Clone, Trig: TrigManuallyDrop {
-	#[inline(always)]
-	fn clone(&self) -> Self {
-		let ref_value: &T = self.deref();
-		let state = self.state.clone();
 		
-		Self {
-			state,
-			value: UnsafeStdManuallyDrop::new(Clone::clone(ref_value)),
-			_pp: PhantomData,
+		fn {
+			/// Wrap a value to be manually dropped.
+			new |value| {
+				Self {
+					value,
+					state: StateManuallyDrop::empty(),
+					_pp: PhantomData
+				}
+			}
+			
+			as_unsafestd_manuallydrop |sself| {
+				&sself.value
+			}
+			
+			as_mut_unsafestd_manuallydrop |sself| {
+				&mut sself.value
+			}
+			
+			/// Get reference to value. Always unprotected!
+			force_as_value |sself| {
+				&sself.value
+			}
+			
+			/// Get a mutable reference to a value. Always unprotected!
+			force_as_mut_value |sself| {
+				&mut sself.value
+			}
 		}
 	}
 }
+
+//impl<T> Copy for ManuallyDrop<T> where T: ?Sized + Copy {} TODO
 
 impl<T, Trig> Drop for SafeManuallyDrop<T, Trig> where T: ?Sized, Trig: TrigManuallyDrop {
 	#[inline]

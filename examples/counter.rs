@@ -1,5 +1,4 @@
 
-
 // Let me remind you that CounterManuallyDrop by behavior allows undefined 
 // behavior in the same way as ManuallyDrop, but, unlike ManuallyDrop, 
 // Counter keeps a counter of the number of undefined behavior triggers.
