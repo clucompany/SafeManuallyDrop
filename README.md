@@ -166,10 +166,6 @@ fn main() {
 // i.e. with traceable behavior.
 #"always_safe_manuallydrop"
 
-// For compatibility with older software, create a separate crate::core::hook 
-// instead of the new crate::core::trig::hook.
-"enable_deprecated_hook"
-
 // Mark functions as unsafe even if they are safe 
 // for std API compatibility.
 "always_compatible_stdapi"

@@ -1,5 +1,5 @@
 
-#[cfg(feature = "support_panic_trig")]
+#[cfg(all(test, feature = "support_panic_trig"))]
 use crate::core::trig::panic::PanicTrigManuallyDrop;
 use crate::core::trig::TrigManuallyDrop;
 use core::fmt::Debug;
@@ -79,15 +79,6 @@ impl StateManuallyDropData {
 	
 	/// Create a state from a byte, in case of an error, 
 	/// return the default state.
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `from_or_empty` instead")]
-	#[inline]
-	pub /*const*/ fn from_or_default(a: u8) -> Self {
-		Self::from_or_empty(a)
-	}
-	
-	/// Create a state from a byte, in case of an error, 
-	/// return the default state.
 	#[inline]
 	pub /*const*/ fn from_or_empty(a: u8) -> Self {
 		Self::is_valid_byte_fn(
@@ -120,14 +111,6 @@ impl StateManuallyDropData {
 	const fn __empty() -> Self {
 		let sself = Self::Empty;
 		sself
-	}
-	
-	/// Create default state
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `empty` instead")]
-	#[inline(always)]
-	pub const fn default() -> Self {
-		Self::empty()
 	}
 	
 	/// Create default state
@@ -185,28 +168,12 @@ impl StateManuallyDropData {
 	}
 	
 	/// Determining if a trigger should be executed
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `is_next_panic` instead")]
-	#[inline(always)]
-	pub const fn is_next_panic(&self) -> bool {
-		self.is_next_trig()
-	}
-	
-	/// Determining if a trigger should be executed
 	#[inline(always)]
 	pub const fn is_next_trig(&self) -> bool {
 		match self {
 			StateManuallyDropData::Empty => false,
 			_ => true,
 		}
-	}
-	
-	/// Whether the current state is like a new unused object.
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `is_empty` instead")]
-	#[inline(always)]
-	pub const fn is_default(&self) -> bool {
-		self.is_empty()
 	}
 	
 	/// Whether the current state is like a new unused object.
@@ -230,22 +197,6 @@ impl StateManuallyDrop {
 		debug_assert_eq!(sself.is_next_trig(), false);
 		
 		sself
-	}
-	
-	/// Create default state
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `is_trig_mode` instead")]
-	#[inline(always)]
-	pub /*const*/ fn default() -> Self {
-		Self::empty()
-	}
-	
-	/// Whether the current state is like a new unused object.
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `is_ignore_trig_mode` instead")]
-	#[inline(always)]
-	pub fn is_def_mode(&self) -> bool {
-		self.is_empty()
 	}
 	
 	/// Whether the current state is like a new unused object.
@@ -311,16 +262,6 @@ impl StateManuallyDrop {
 	
 	/// Change the ManuallyDrop state to a panicked state, or execute a trigger 
 	/// function if the current state was not empty.
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `to_dropmode_or_trig` instead")]
-	#[cfg(feature = "support_panic_trig")]
-	#[inline(always)]
-	pub fn to_dropmode_or_panic(&self) {
-		self.to_dropmode_or_trig::<PanicTrigManuallyDrop>()
-	}
-	
-	/// Change the ManuallyDrop state to a panicked state, or execute a trigger 
-	/// function if the current state was not empty.
 	#[inline(always)]
 	pub fn to_dropmode_or_trig<Trig: TrigManuallyDrop>(&self) {
 		self.__safe_replace_mutstate::<Trig>(
@@ -328,16 +269,6 @@ impl StateManuallyDrop {
 		);
 		
 		debug_assert_eq!(self.is_next_trig(), true);
-	}
-	
-	/// Change the state of ManuallyDrop to the state of the released value, 
-	/// or execute the trigger function if the current state was not empty.
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `to_takemode_or_trig` instead")]
-	#[cfg(feature = "support_panic_trig")]
-	#[inline(always)]
-	pub fn to_takemode_or_panic(&self) {
-		self.to_takemode_or_trig::<PanicTrigManuallyDrop>()
 	}
 	
 	/// Change the state of ManuallyDrop to the state of the released value, 
@@ -353,16 +284,6 @@ impl StateManuallyDrop {
 	
 	/// Change the ManuallyDrop state to ignore freeing the value, or execute the 
 	/// trigger function if the current state was not empty.
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `to_ignore_trig_when_drop` instead")]
-	#[cfg(feature = "support_panic_trig")]
-	#[inline(always)]
-	pub fn to_ignore_panic_when_drop(&self) {
-		self.to_ignore_trig_when_drop::<PanicTrigManuallyDrop>()
-	}
-	
-	/// Change the ManuallyDrop state to ignore freeing the value, or execute the 
-	/// trigger function if the current state was not empty.
 	#[inline(always)]
 	pub fn to_ignore_trig_when_drop<Trig: TrigManuallyDrop>(&self) {
 		self.__safe_replace_mutstate::<Trig>(
@@ -370,16 +291,6 @@ impl StateManuallyDrop {
 		);
 		
 		debug_assert_eq!(self.is_next_trig(), true);
-	}
-	
-	/// Change the state of ManuallyDrop to the state of the released value, or execute 
-	/// the trigger function if the current state was not empty.
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `to_intoinnermode_or_trig` instead")]
-	#[cfg(feature = "support_panic_trig")]
-	#[inline(always)]
-	pub fn to_intoinnermode_or_panic(&self) {
-		self.to_intoinnermode_or_trig::<PanicTrigManuallyDrop>()
 	}
 	
 	/// Change the state of ManuallyDrop to the state of the released value, or execute 
@@ -395,27 +306,6 @@ impl StateManuallyDrop {
 	
 	/// Check the state of ManuallyDrop for a readable state, or execute a trigger 
 	/// function if the current state was not empty.
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `deref_or_trig` instead")]
-	#[cfg(feature = "support_panic_trig")]
-	pub fn deref_or_panic<F: FnOnce()>(&self, fn_panic: F) {
-		type Trig = PanicTrigManuallyDrop;
-		let a_state = self.read();
-		
-		if a_state.is_next_trig() {
-			fn_panic();
-			
-			Trig::trig_next_invalid_beh(
-				format_args!(
-					"Undefined behavior when using ManuallyDrop.deref(), instead of the expected default state, the current state: {:?}.",
-					a_state
-				)
-			)
-		}
-	}
-	
-	/// Check the state of ManuallyDrop for a readable state, or execute a trigger 
-	/// function if the current state was not empty.
 	#[inline(always)]
 	pub fn deref_or_trig<Trig: TrigManuallyDrop>(&self) {
 		let a_state = self.read();
@@ -424,27 +314,6 @@ impl StateManuallyDrop {
 			Trig::trig_next_invalid_beh(
 				format_args!(
 					"Undefined behavior when using ManuallyDrop.deref(), instead of the expected default state, the current state: {:?}.",
-					a_state
-				)
-			)
-		}
-	}
-	
-	/// Check the state of ManuallyDrop for a readable state, or execute a trigger 
-	/// function if the current state was not empty.
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `if_empty_then_run_trigfn` instead")]
-	#[cfg(feature = "support_panic_trig")]
-	pub fn if_def_state_then_run_panicfn<F: FnOnce()>(&self, fn_panic: F) {
-		type Trig = PanicTrigManuallyDrop;
-		let a_state = self.read();
-		
-		if a_state.is_empty() {
-			fn_panic();
-			
-			Trig::trig_next_invalid_beh(
-				format_args!(
-					"SafeManuallyDrop, undef_beh (exp_def_state), SafeManuallyDrop::default\\empty() == {:?}",
 					a_state
 				)
 			)
@@ -467,14 +336,6 @@ impl StateManuallyDrop {
 				)
 			)
 		}
-	}
-	
-	/// Determining if a trigger should be executed
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `is_next_trig` instead")]
-	#[inline(always)]
-	pub fn is_next_panic(&self) -> bool {
-		self.is_next_trig()
 	}
 	
 	/// Determining if a trigger should be executed

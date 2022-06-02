@@ -170,7 +170,7 @@ fn main() {
 
 # cargo.toml -> features
 
-```ignore
+```rust,ignore
 // The ManuallyDrop type is always SafeManuallyDrop if the debug_assertions flag 
 // is active (test build, debug build).
 "always_check_in_case_debug_assertions"
@@ -178,10 +178,6 @@ fn main() {
 // The AutoSafeManuallyDrop/ManuallyDrop type is always SafeManuallyDrop, 
 // i.e. with traceable behavior.
 #"always_safe_manuallydrop"
-
-// For compatibility with older software, create a separate crate::core::hook 
-// instead of the new crate::core::trig::hook.
-"enable_deprecated_hook"
 
 // Mark functions as unsafe even if they are safe 
 // for std API compatibility.
@@ -236,22 +232,6 @@ fn main() {
 
 */
 
-// =============
-// !!ATTENTION!!
-// =============
-// Anything related to deprecated features 
-// will be removed in a future regression release.
-//
-// 0.1.0
-// 0.1.2
-// ... unk
-// 0.1.5
-// 0.1.6
-// 0.1.7
-// 0.1.8 <-- current
-// 1.0.0 <--
-//
-
 #![allow(non_snake_case)]
 
 #![no_std]
@@ -265,15 +245,7 @@ pub mod core {
 	pub mod state;
 	
 	/// Flags used when building this library
-	//#[macro_use]
 	pub mod flags;
-	
-	/// Protected version of the SafeManuallyDrop with an execution 
-	/// function in case of undefined behavior of the ManuallyDrop logic.
-	#[doc(hidden)]
-	#[deprecated(since = "0.1.2", note = "Use `SafeManuallyDrop::core::trig::hook` instead")]
-	#[cfg(feature = "enable_deprecated_hook")]
-	pub mod hook;
 	
 	/// Implementation of behavior in case of detection of 
 	/// undefined manual memory management.
@@ -281,22 +253,7 @@ pub mod core {
 }
 
 /// Internal code generation
-#[doc(hidden)]
 mod macro_codegen;
-
-#[doc(hidden)]
-#[deprecated(since = "0.1.5", note = "Use `SafeManuallyDrop::core::state` instead")]
-pub use crate::core::state as state;
-
-#[doc(hidden)]
-#[deprecated(since = "0.1.5", note = "Use `SafeManuallyDrop::core::hook` instead")]
-#[allow(deprecated)]
-#[cfg(feature = "enable_deprecated_hook")]
-pub use crate::core::hook as hook;
-
-#[doc(hidden)]
-#[deprecated(since = "0.1.5", note = "Use `SafeManuallyDrop::core::flags` instead")]
-pub use crate::core::flags as flags;
 
 /// Safe and insecure implementations of manual memory management.
 pub mod beh {
@@ -311,15 +268,6 @@ pub mod beh {
 	pub mod auto;
 }
 
-/// A secure or non-secure version of ManuallyDrop with a function to trigger 
-/// a panic in case of undefined behavior of the ManuallyDrop logic.
-#[cfg(feature = "support_panic_trig")]
-#[doc(hidden)]
-#[deprecated(since = "0.1.7", note = "Use `SafeManuallyDrop::AlwaysSafePanicManuallyDrop` instead")]
-pub type PanicManuallyDrop<T> = AlwaysSafePanicManuallyDrop<T>;
-/// A secure or non-secure version of ManuallyDrop with a function to trigger 
-/// a panic in case of undefined behavior of the ManuallyDrop logic.
-
 #[cfg(feature = "support_panic_trig")]
 pub type AlwaysSafePanicManuallyDrop<T> = crate::core::trig::panic::AlwaysSafePanicManuallyDrop<T>;
 
@@ -332,13 +280,6 @@ pub type AutoSafePanicManuallyDrop<T> = crate::core::trig::panic::AutoSafePanicM
 /// Protected or unprotected version of ManuallyDrop with function 
 /// execution in case of undefined behavior of ManuallyDrop logic. 
 #[cfg(feature = "support_hookfn_trig")]
-#[doc(hidden)]
-#[deprecated(since = "0.1.7", note = "Use `SafeManuallyDrop::AlwaysSafeHookManuallyDrop` instead")]
-pub type HookManuallyDrop<T> = AlwaysSafeHookManuallyDrop<T>;
-
-/// Protected or unprotected version of ManuallyDrop with function 
-/// execution in case of undefined behavior of ManuallyDrop logic. 
-#[cfg(feature = "support_hookfn_trig")]
 pub type AlwaysSafeHookManuallyDrop<T> = crate::core::trig::hook::AlwaysSafeHookManuallyDrop<T>;
 
 
@@ -346,15 +287,6 @@ pub type AlwaysSafeHookManuallyDrop<T> = crate::core::trig::hook::AlwaysSafeHook
 /// execution in case of undefined behavior of ManuallyDrop logic. 
 #[cfg(feature = "support_hookfn_trig")]
 pub type AutoSafeHookManuallyDrop<T> = crate::core::trig::hook::AutoSafeHookManuallyDrop<T>;
-
-/// A protected version of SafeManuallyDrop with a function to count 
-/// the amount of undefined behavior of the ManuallyDrop logic. 
-/// The undefined behavior of CounterManuallyDrop will be the same 
-/// as when using the standard ManuallyDrop.
-#[cfg(feature = "support_count_trig")]
-#[doc(hidden)]
-#[deprecated(since = "0.1.7", note = "Use `SafeManuallyDrop::AlwaysSafeCounterManuallyDrop` instead")]
-pub type CounterManuallyDrop<T> = crate::core::trig::counter::AlwaysSafeCounterManuallyDrop<T>;
 
 /// A protected version of SafeManuallyDrop with a function to count 
 /// the amount of undefined behavior of the ManuallyDrop logic. 
@@ -374,13 +306,6 @@ pub type AutoSafeCounterManuallyDrop<T> = crate::core::trig::counter::AutoSafeCo
 /// The safe version of ManuallyDrop loops the current thread in case of undefined behavior, 
 /// and using the `support_istrig_loop` build flag, you can determine whether the 
 /// thread looped. 
-#[doc(hidden)]
-#[deprecated(since = "0.1.7", note = "Use `SafeManuallyDrop::AlwaysSafeEmptyLoopManuallyDrop` instead")]
-pub type EmptyLoopManuallyDrop<T> = crate::core::trig::r#loop::AlwaysSafeEmptyLoopManuallyDrop<T>;
-
-/// The safe version of ManuallyDrop loops the current thread in case of undefined behavior, 
-/// and using the `support_istrig_loop` build flag, you can determine whether the 
-/// thread looped. 
 pub type AlwaysSafeEmptyLoopManuallyDrop<T> = crate::core::trig::r#loop::AlwaysSafeEmptyLoopManuallyDrop<T>;
 
 /// The safe or unsafe version of ManuallyDrop loops the current thread in case 
@@ -392,7 +317,7 @@ pub type AutoSafeEmptyLoopManuallyDrop<T> = crate::core::trig::r#loop::AutoSafeE
 /// an unprotected version of ManuallyDrop with a default trigger.
 /// 
 /// features:
-/// ```ignore
+/// ```text
 /// if always_safe_manuallydrop | ( always_check_in_case_debug_assertions && debug_assertions ) -> SafeManuallyDrop
 /// else -> UnsafeManuallyDrop
 /// ```

@@ -3,11 +3,6 @@
 /// an unprotected version of ManuallyDrop with a default trigger.
 pub const IS_SAFE_MODE: bool = crate::ManuallyDrop::is_safe_mode();
 
-#[doc(hidden)]
-#[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_PANIC_TRIG` instead")]
-/// Whether the library build flag was used to support panic_trig.
-pub const SUPPORT_PANIC_TRIG: bool = IS_SUPPORT_PANIC_TRIG;
-
 /// Whether the library build flag was used to support panic_trig.
 pub const IS_SUPPORT_PANIC_TRIG: bool = {
 	#[cfg(feature = "support_panic_trig")] {
@@ -18,11 +13,6 @@ pub const IS_SUPPORT_PANIC_TRIG: bool = {
 		false
 	}
 };
-
-#[doc(hidden)]
-#[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_HOOKFN_TRIG` instead")]
-/// Whether the library build flag was used to support hookfn_trig.
-pub const SUPPORT_HOOKFN_TRIG: bool = IS_SUPPORT_HOOKFN_TRIG;
 
 /// Whether the library build flag was used to support hookfn_trig.
 pub const IS_SUPPORT_HOOKFN_TRIG: bool = {
@@ -35,11 +25,6 @@ pub const IS_SUPPORT_HOOKFN_TRIG: bool = {
 	}
 };
 
-#[doc(hidden)]
-#[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_COUNT_TRIG` instead")]
-/// Whether the library build flag was used to support count_trig.
-pub const SUPPORT_COUNT_TRIG: bool = IS_SUPPORT_COUNT_TRIG;
-
 /// Whether the library build flag was used to support count_trig.
 pub const IS_SUPPORT_COUNT_TRIG: bool = {
 	#[cfg(feature = "support_count_trig")] {
@@ -50,16 +35,6 @@ pub const IS_SUPPORT_COUNT_TRIG: bool = {
 		false
 	}
 };
-
-#[doc(hidden)]
-#[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_LOOP_TRIG` instead")]
-/// Whether the library build flag was used to support empty_trig.
-pub const SUPPORT_EMPTY_TRIG: bool = IS_SUPPORT_LOOP_TRIG;
-
-#[doc(hidden)]
-#[deprecated(since = "0.1.5", note = "Use `IS_SUPPORT_LOOP_TRIG` instead")]
-/// Whether the library build flag was used to support empty_trig.
-pub const IS_SUPPORT_EMPTY_TRIG: bool = IS_SUPPORT_LOOP_TRIG;
 
 /// Whether the library build flag was used to support loop_trig.
 pub const IS_SUPPORT_LOOP_TRIG: bool = true;

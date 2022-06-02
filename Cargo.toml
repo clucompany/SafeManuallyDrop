@@ -1,6 +1,6 @@
 [package]
 name = "SafeManuallyDrop"
-version = "0.1.8"
+version = "1.0.0"
 authors = ["Denis Kotlyarov (Денис Котляров) <denis2005991@gmail.com>"]
 repository = "https://github.com/clucompany/SafeManuallyDrop.git"
 edition = "2021"
@@ -21,10 +21,6 @@ default = [
 	# The AutoSafeManuallyDrop/ManuallyDrop type is always SafeManuallyDrop, 
 	# i.e. with traceable behavior.
 	#"always_safe_manuallydrop",
-	
-	# For compatibility with older software, create a separate crate::core::hook 
-	# instead of the new crate::core::trig::hook.
-	"enable_deprecated_hook",
 	
 	# Mark functions as unsafe even if they are safe 
 	# for std API compatibility.
@@ -84,7 +80,6 @@ support_count_trig = []
 support_panic_trig = []
 support_istrig_loop = []
 
-enable_deprecated_hook = []
 always_compatible_stdapi = []
 
 always_deftrig_panic = []

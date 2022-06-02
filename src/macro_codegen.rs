@@ -454,13 +454,6 @@ macro_rules! __codegen {
 				}
 			}
 			
-			#[doc(hidden)]
-			#[deprecated(since = "0.1.2", note = "Use `is_empty_state` instead")]
-			#[inline(always)]
-			pub fn is_def_state(&self) -> Option<bool> {
-				self.is_empty_state()
-			}
-			
 			/// Checking if a trigger that defines undefined behavior will fire.
 			/// Some(true) - means that the state is empty and you can work with the value later.
 			/// Some(false) means that the value has already been converted by some method, and 
@@ -532,26 +525,6 @@ macro_rules! __codegen {
 			/// Checking if a trigger that defines undefined behavior will fire. 
 			/// false - means the state is empty and you can work with the value in the future.
 			/// - true means the value has already been converted by some method.
-			#[deprecated(since = "0.1.2", note = "Use `is_next_panic` instead")]
-			#[doc(hidden)]
-			#[inline(always)]
-			pub fn is_maybe_next_panic(&self) -> bool {
-				self.is_next_trig()
-			}
-			
-			/// Checking if a trigger that defines undefined behavior will fire. 
-			/// false - means the state is empty and you can work with the value in the future.
-			/// - true means the value has already been converted by some method.
-			#[deprecated(since = "0.1.2", note = "Use `is_next_trig` instead")]
-			#[doc(hidden)]
-			#[inline(always)]
-			pub fn is_next_panic(&self) -> bool {
-				self.is_next_trig()
-			}
-			
-			/// Checking if a trigger that defines undefined behavior will fire. 
-			/// false - means the state is empty and you can work with the value in the future.
-			/// - true means the value has already been converted by some method.
 			#[inline(always)]
 			pub fn is_next_trig(&self) -> bool {
 				$crate::__if_codegen! {
@@ -561,17 +534,6 @@ macro_rules! __codegen {
 						return false;
 					}
 				}
-			}
-			
-			/// Checking if a trigger that defines undefined behavior will fire.
-			/// Some(false) - means that the state is empty and you can work with the value later.
-			/// Some(true) means that the value has already been converted by some method, and further work with the value will cause an undefined behavior trigger.
-			/// None - This version of ManuallyDrop is stateless, so defining undefined behavior is not possible.
-			#[deprecated(since = "0.1.2", note = "Use `is_next_trig_optionresult` instead")]
-			#[doc(hidden)]
-			#[inline(always)]
-			pub fn is_next_panic_optionresult(&self) -> Option<bool> {
-				self.is_next_trig_optionresult()
 			}
 			
 			/// Checking if a trigger that defines undefined behavior will fire.

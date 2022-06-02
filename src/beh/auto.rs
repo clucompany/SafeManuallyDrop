@@ -124,13 +124,13 @@ cfg_if_safemode! {
 	/// an unprotected version of ManuallyDrop with a default trigger.
 	/// 
 	/// features:
-	/// ```ignore
+	/// ```no_run
 	/// if always_safe_manuallydrop | ( always_check_in_case_debug_assertions && debug_assertions ) -> SafeManuallyDrop
 	/// else -> UnsafeManuallyDrop
 	/// ```
 	/// 
 	/// current: 
-	/// ```ignore
+	/// ```no_run
 	/// UnsafeManuallyDrop
 	/// ```
 	#if_not_safe(pub type AutoSafeManuallyDrop<T, Trig> = crate::beh::r#unsafe::UnsafeManuallyDrop<T, Trig>;)
@@ -140,13 +140,13 @@ cfg_if_safemode! {
 	/// an unprotected version of ManuallyDrop with a default trigger.
 	/// 
 	/// features:
-	/// ```ignore
+	/// ```text
 	/// if always_safe_manuallydrop | ( always_check_in_case_debug_assertions && debug_assertions ) -> SafeManuallyDrop
 	/// else -> UnsafeManuallyDrop
 	/// ```
 	/// 
 	/// current: 
-	/// ```ignore
+	/// ```text
 	/// SafeManuallyDrop
 	/// ```
 	#if_safe(pub type AutoSafeManuallyDrop<T, Trig> = crate::beh::safe::SafeManuallyDrop<T, Trig>;)

@@ -85,6 +85,3 @@ pub (crate) use current_deftrig::IS_INVALID_AUTO_DETECT_DEFTRIG;
 /// thread looped. 
 pub mod r#loop;
 
-#[doc(hidden)]
-#[deprecated(since = "0.1.5", note = "Use `SafeManuallyDrop::core::trig::r#loop::EmptyLoopTrigManuallyDrop` instead")]
-pub use crate::core::trig::r#loop::EmptyLoopTrigManuallyDrop as EmptyLoopTrigManuallyDrop;
