@@ -553,7 +553,10 @@ macro_rules! __codegen {
 			
 		}
 		
-		impl<T, Trig> Clone for $current_type<T, Trig> where T: ?Sized + Clone, Trig: TrigManuallyDrop {
+		// #[derive(/*Copy, */Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]:
+		//
+		
+		impl<T, Trig> Clone for $current_type<T, Trig> where T: Sized + Clone, Trig: TrigManuallyDrop {
 			#[inline(always)]
 			fn clone(&self) -> Self {
 				let ref_value: &T = self.deref();
@@ -585,29 +588,57 @@ macro_rules! __codegen {
 			}
 		}
 		
-		impl<T, Trig> Default for $current_type<T, Trig> where T: ?Sized + Default, Trig: TrigManuallyDrop {
+		impl<T, Trig> Default for $current_type<T, Trig> where T: Sized + Default, Trig: TrigManuallyDrop {
 			#[inline(always)]
 			fn default() -> Self {
-				let value = Default::default();
+				let value: T = Default::default();
 				Self::new(value)
 			}
 		}
 		
-		impl<T, Trig, Rhs> PartialEq<Rhs> for $current_type<T, Trig> where T: ?Sized + PartialEq<Rhs>, Trig: TrigManuallyDrop {
+		impl<T, Trig> PartialEq<Self> for $current_type<T, Trig> where T: PartialEq<T>, Trig: TrigManuallyDrop {
 			#[inline]
-			fn eq(&self, a: &Rhs) -> bool {
+			fn eq(&self, a: &Self) -> bool {
 				let value: &T = self.deref();
-				PartialEq::<Rhs>::eq(value, a)
+				PartialEq::eq(value, a)
 			}
 			
 			#[inline]
-			fn ne(&self, a: &Rhs) -> bool {
+			fn ne(&self, a: &Self) -> bool {
 				let value: &T = self.deref();
-				PartialEq::<Rhs>::ne(value, a)
+				PartialEq::ne(value, a)
 			}
 		}
 		
-		impl<T, Trig> Eq for $current_type<T, Trig> where T: Eq + PartialEq<$current_type<T, Trig>>, Trig: TrigManuallyDrop {
+		impl<T, Trig> PartialEq<T> for $current_type<T, Trig> where T: PartialEq<T>, Trig: TrigManuallyDrop {
+			#[inline]
+			fn eq(&self, a: &T) -> bool {
+				let value: &T = self.deref();
+				PartialEq::eq(value, a)
+			}
+			
+			#[inline]
+			fn ne(&self, a: &T) -> bool {
+				let value: &T = self.deref();
+				PartialEq::ne(value, a)
+			}
+		}
+		
+		impl<T, Trig> PartialEq<UnsafeStdManuallyDrop<T>> for $current_type<T, Trig> where T: PartialEq<T>, Trig: TrigManuallyDrop {
+			#[inline]
+			fn eq(&self, a: &UnsafeStdManuallyDrop<T>) -> bool {
+				let value: &T = self.deref();
+				PartialEq::eq(value, a)
+			}
+			
+			#[inline]
+			fn ne(&self, a: &UnsafeStdManuallyDrop<T>) -> bool {
+				let value: &T = self.deref();
+				PartialEq::ne(value, a)
+			}
+		}
+		
+		impl<T, Trig> Eq for $current_type<T, Trig> where T: Eq + PartialEq<T>, Trig: TrigManuallyDrop {
 			#[inline]
 			fn assert_receiver_is_total_eq(&self) {
 				let value: &T = self.deref();
@@ -615,7 +646,7 @@ macro_rules! __codegen {
 			}
 		}
 		
-		impl<T, Trig> Ord for $current_type<T, Trig> where T: Ord + PartialOrd<$current_type<T, Trig>>, Trig: TrigManuallyDrop {
+		impl<T, Trig> Ord for $current_type<T, Trig> where T: Eq + PartialOrd<T> + Ord, Trig: TrigManuallyDrop {
 			#[inline]
 			fn cmp(&self, a: &Self) -> core::cmp::Ordering {
 				let value: &T = self.deref();
@@ -623,15 +654,31 @@ macro_rules! __codegen {
 			}
 		}
 		
-		impl<T, Trig, Rhs> PartialOrd<Rhs> for $current_type<T, Trig> where T: ?Sized + PartialOrd<Rhs>, Trig: TrigManuallyDrop {
+		impl<T, Trig> PartialOrd<Self> for $current_type<T, Trig> where T: PartialEq<T> + PartialOrd<T>, Trig: TrigManuallyDrop {
 			#[inline]
-			fn partial_cmp(&self, a: &Rhs) -> Option<core::cmp::Ordering> {
+			fn partial_cmp(&self, a: &Self) -> Option<core::cmp::Ordering> {
 				let value: &T = self.deref();
 				PartialOrd::partial_cmp(value, a)
 			}
 		}
 		
-		impl<T, Trig> Hash for $current_type<T, Trig> where T: ?Sized + Hash, Trig: TrigManuallyDrop {
+		impl<T, Trig> PartialOrd<T> for $current_type<T, Trig> where T: PartialEq<T> + PartialOrd<T>, Trig: TrigManuallyDrop {
+			#[inline]
+			fn partial_cmp(&self, a: &T) -> Option<core::cmp::Ordering> {
+				let value: &T = self.deref();
+				PartialOrd::partial_cmp(value, a)
+			}
+		}
+		
+		impl<T, Trig> PartialOrd<UnsafeStdManuallyDrop<T>> for $current_type<T, Trig> where T: PartialEq<T> + PartialOrd<T>, Trig: TrigManuallyDrop {
+			#[inline]
+			fn partial_cmp(&self, a: &UnsafeStdManuallyDrop<T>) -> Option<core::cmp::Ordering> {
+				let value: &T = self.deref();
+				PartialOrd::partial_cmp(value, a)
+			}
+		}
+		
+		impl<T, Trig> Hash for $current_type<T, Trig> where T: Hash, Trig: TrigManuallyDrop {
 			#[inline]
 			fn hash<H>(&self, a: &mut H) where H: core::hash::Hasher {
 				let value: &T = self.deref();
@@ -639,7 +686,7 @@ macro_rules! __codegen {
 			}
 		}
 		
-		impl<T, Trig> Debug for $current_type<T, Trig> where T: ?Sized + Debug, Trig: TrigManuallyDrop {
+		impl<T, Trig> Debug for $current_type<T, Trig> where T: Debug, Trig: TrigManuallyDrop {
 			#[inline(always)]
 			fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
 				let value: &T = self.deref();
@@ -650,7 +697,7 @@ macro_rules! __codegen {
 		impl<T, Trig> From<T> for $current_type<T, Trig> where T: Sized, Trig: TrigManuallyDrop {
 			#[inline(always)]
 			fn from(a: T) -> Self {
-				$current_type::new(a)
+				Self::new(a)
 			}
 		}
 		

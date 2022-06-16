@@ -39,7 +39,7 @@ pub type DefTrigManuallyDrop = crate::core::trig::hook::HookFnTrigManuallyDrop;
 	not(feature = "always_deftrig_count"),
 	not(feature = "always_deftrig_loop"),
 ))]
-pub type DefTrigManuallyDrop = crate::core::trig::panic::PanicFnTrigManuallyDrop;
+pub type DefTrigManuallyDrop = crate::core::trig::panic::PanicTrigManuallyDrop;
 
 /// Trigger is the default function that will be executed in case of undefined behavior of protected ManuallyDrop.
 #[cfg(all(
