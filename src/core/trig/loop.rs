@@ -19,11 +19,14 @@ mod _support_istrig_loop {
 /// and using the `support_istrig_loop` build flag, you can determine whether the 
 /// thread looped. 
 pub type AlwaysSafeEmptyLoopManuallyDrop<T> = crate::beh::safe::SafeManuallyDrop<T, EmptyLoopTrigManuallyDrop>;
+
 /// The safe or unsafe version of ManuallyDrop loops the current thread in case 
 /// of undefined behavior, and with the build flag `support_istrig_loop` you 
 /// can determine if the thread is looped.
 pub type AutoSafeEmptyLoopManuallyDrop<T> = crate::beh::auto::AutoSafeManuallyDrop<T, EmptyLoopTrigManuallyDrop>;
 
+/// Starts looping the current thread on error, and with the 
+/// `support_istrig_loop` build flag you can determine if a thread is looped.
 pub enum EmptyLoopTrigManuallyDrop {}
 
 impl TrigManuallyDrop for EmptyLoopTrigManuallyDrop {

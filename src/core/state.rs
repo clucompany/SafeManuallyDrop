@@ -1,6 +1,7 @@
 
 #[cfg(all(test, feature = "support_panic_trig"))]
 use crate::core::trig::panic::PanicTrigManuallyDrop;
+use core::fmt::Display;
 use crate::core::trig::TrigManuallyDrop;
 use core::fmt::Debug;
 use core::sync::atomic::Ordering;
@@ -33,6 +34,13 @@ impl Debug for StateManuallyDrop {
 	}
 }
 
+impl Display for StateManuallyDrop {
+	#[inline(always)]
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+		Display::fmt(&self.read(), f)
+	}
+}
+
 /// Safe States for ManuallyDrop
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -54,6 +62,23 @@ pub enum StateManuallyDropData {
 	/// (unsafe/manual_behavior) ManuallyDrop must be forgotten, subsequent work 
 	/// with ManuallyDrop will definitely call the trigger.
 	IgnoreTrigWhenDrop = 30,
+}
+
+impl Display for StateManuallyDropData {
+	#[inline]
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+		let str = match self {
+			Self::Empty => "Empty",
+			
+			Self::TakeModeTrig => "TakeModeTrig",
+			Self::DropModeTrig => "DropModeTrig",
+			Self::IntoInnerModeTrig => "IntoInnerModeTrig",
+			
+			Self::IgnoreTrigWhenDrop => "IgnoreTrigWhenDrop",
+		};
+		
+		Display::fmt(str, f)
+	}
 }
 
 impl From<u8> for StateManuallyDropData {
@@ -127,7 +152,7 @@ impl StateManuallyDropData {
 	
 	/// Generic Status Byte Validation Function
 	#[inline(always)]
-	pub /*const*/ fn is_valid_byte_fn<F: FnOnce() -> R, FE: FnOnce() -> R, R>(a: u8, next: F, errf: FE) -> R {
+	pub /*const*/ fn is_valid_byte_fn<R>(a: u8, next: impl FnOnce() -> R, errf: impl FnOnce() -> R) -> R {
 		match a {
 			a if a == Self::Empty as _ ||
 			
@@ -155,7 +180,7 @@ impl StateManuallyDropData {
 	/// (important, the byte is checked anyway, but only in a debug build)
 	#[inline(always)]
 	pub unsafe fn force_from(a: u8) -> Self {
-		debug_assert_eq!(
+		crate::__fullinternal_debug_assertions!(
 			Self::is_valid_byte(a),
 			true
 		);
@@ -193,8 +218,8 @@ impl StateManuallyDrop {
 		let sself = Self {
 			state: AtomicU8::new(StateManuallyDropData::empty() as _)
 		};
-		debug_assert_eq!(sself.is_empty(), true);
-		debug_assert_eq!(sself.is_next_trig(), false);
+		crate::__fullinternal_debug_assertions!(sself.is_empty(), true);
+		crate::__fullinternal_debug_assertions!(sself.is_next_trig(), false);
 		
 		sself
 	}
@@ -235,8 +260,8 @@ impl StateManuallyDrop {
 		let old_value = self.__force_write(
 			StateManuallyDropData::Empty
 		);
-		debug_assert_eq!(self.is_empty(), true);
-		debug_assert_eq!(self.is_next_trig(), false);
+		crate::__fullinternal_debug_assertions!(self.is_empty(), true);
+		crate::__fullinternal_debug_assertions!(self.is_next_trig(), false);
 		
 		old_value
 	}
@@ -245,7 +270,7 @@ impl StateManuallyDrop {
 	/// definer (note that the new state must fire on validation)
 	#[inline]
 	fn __safe_replace_mutstate<Trig: TrigManuallyDrop>(&self, new_state: StateManuallyDropData) {
-		debug_assert_eq!(new_state.is_next_trig(), true);
+		crate::__fullinternal_debug_assertions!(new_state.is_next_trig(), true);
 		
 		let old_state = self.__force_write(new_state);
 		
@@ -268,7 +293,7 @@ impl StateManuallyDrop {
 			StateManuallyDropData::DropModeTrig
 		);
 		
-		debug_assert_eq!(self.is_next_trig(), true);
+		crate::__fullinternal_debug_assertions!(self.is_next_trig(), true);
 	}
 	
 	/// Change the state of ManuallyDrop to the state of the released value, 
@@ -279,7 +304,7 @@ impl StateManuallyDrop {
 			StateManuallyDropData::TakeModeTrig
 		);
 		
-		debug_assert_eq!(self.is_next_trig(), true);
+		crate::__fullinternal_debug_assertions!(self.is_next_trig(), true);
 	}
 	
 	/// Change the ManuallyDrop state to ignore freeing the value, or execute the 
@@ -290,7 +315,7 @@ impl StateManuallyDrop {
 			StateManuallyDropData::IgnoreTrigWhenDrop
 		);
 		
-		debug_assert_eq!(self.is_next_trig(), true);
+		crate::__fullinternal_debug_assertions!(self.is_next_trig(), true);
 	}
 	
 	/// Change the state of ManuallyDrop to the state of the released value, or execute 
@@ -301,7 +326,7 @@ impl StateManuallyDrop {
 			StateManuallyDropData::IntoInnerModeTrig
 		);
 		
-		debug_assert_eq!(self.is_next_trig(), true);
+		crate::__fullinternal_debug_assertions!(self.is_next_trig(), true);
 	}
 	
 	/// Check the state of ManuallyDrop for a readable state, or execute a trigger 

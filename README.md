@@ -158,63 +158,81 @@ fn main() {
 # cargo.toml -> features
 
 ```
-// The ManuallyDrop type is always SafeManuallyDrop if the debug_assertions flag 
-// is active (test build, debug build).
-"always_check_in_case_debug_assertions"
+// Flags:
+//
+	
+// ManuallyDrop and AutoManuallyDrop are always type safe and are automatically 
+// checked on use if the debug_assertions flag is enabled (the flag is automatically 
+// enabled if test build, debug build, or env: CARGO_PROFILE_RELEASE_DEBUG_ASSERTIONS=true).
+//
+// (Also, AlwaysSafeManuallyDrop is always checked for safety when it is used, regardless of the flags.)
+"always_check_in_case_debug_assertions", 
 
-// The AutoSafeManuallyDrop/ManuallyDrop type is always SafeManuallyDrop, 
-// i.e. with traceable behavior.
-#"always_safe_manuallydrop"
+// ManuallyDrop and AutoManuallyDrop are always checked when used, 
+// regardless of external flags.
+//
+// (Also, AlwaysSafeManuallyDrop is always checked for safety when it is used, regardless of the flags.)
+// "always_safe_manuallydrop",
 
-// Mark functions as unsafe even if they are safe 
-// for std API compatibility.
-"always_compatible_stdapi"
+// Enable additional internal checks of the SafeManuallyDrop library when 
+// the debug_assertions flag is enabled (does not depend on the always_check_in_case_debug_assertions 
+// and always_safe_manuallydrop options). This flag type only applies to internal 
+// library function checks, it is independent of ManuallyDrop and its valid or invalid usage.
+//
+// "allow_fullinternal_debug_assertions",
+
+// Preserve unsafe fn flags even if functions are safe 
+// (may be required for additional compatibility with the standard API)
+"always_compatible_stdapi",
+
+// Trigs:
+//
 
 // Ability to determine if an empty loop trigger has been executed.
-"support_istrig_loop"
+"support_istrig_loop",
 
 // Support for PanicManuallyDrop, in case of undefined behavior 
 // of PanicManuallyDrop there will be a panic.
-"support_panic_trig"
+"support_panic_trig", 
 
 // HookManuallyDrop support, in case of undefined HookManuallyDrop behavior, 
 // the hook function will be called.
-"support_hookfn_trig"
+"support_hookfn_trig",
 
 // Support for CounterManuallyDrop, in case of undefined behavior, 
 // CounterManuallyDrop will add +1 to the counter.
-#"support_count_trig"
+//"support_count_trig",
 
 // The behavior for the simple AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop type will always 
 // cause a panic in case of undefined behavior.
-#"always_deftrig_panic"
+//"always_deftrig_panic",
 
 // The behavior for the simple AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop type will always 
 // call the hook function in case of undefined behavior.
-#"always_deftrig_hookfn"
+//"always_deftrig_hookfn",
 
 // The behavior for the simple AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop type will always call 
 // the +1 counter function in case of undefined behavior.
-#"always_deftrig_count"
+//"always_deftrig_count",
 
 // The behavior for the simple type AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop will always call 
 // the eternal loop function in case of undefined behavior.
-#"always_deftrig_loop"
+//"always_deftrig_loop"
 
 // INFO:
 // If the behavior for the general AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop is not fixed, 
 // the behavior will be determined according to the following scheme:
-// 
-// 	always_deftrig_panic not exists AND
-// 	always_deftrig_hookfn not exists AND
-// 	always_deftrig_count not exists AND
-// 	always_deftrig_loop not exists THEN
-// 
-// 	support_hookfn_trig -> Hook,	else:
-// 	support_panic_trig -> Panic,	else:
-// 	support_count_trig -> Count,	else:
-// 		Loop
-// 
+//
+//	always_deftrig_panic not exists AND
+//	always_deftrig_hookfn not exists AND
+//	always_deftrig_count not exists AND
+//	always_deftrig_loop not exists THEN
+//
+//	support_hookfn_trig -> Hook,	else:
+//	support_panic_trig -> Panic,	else:
+//	support_count_trig -> Count,	else:
+//		Loop
+//
 ```
 
 # License

@@ -14,17 +14,35 @@ categories = ["development-tools"]
 
 [features]
 default = [
-	# The ManuallyDrop type is always SafeManuallyDrop if the debug_assertions flag 
-	# is active (test build, debug build).
+	# Flags:
+	#
+	
+	# ManuallyDrop and AutoManuallyDrop are always type safe and are automatically 
+	# checked on use if the debug_assertions flag is enabled (the flag is automatically 
+	# enabled if test build, debug build, or env: CARGO_PROFILE_RELEASE_DEBUG_ASSERTIONS=true).
+	#
+	# (Also, AlwaysSafeManuallyDrop is always checked for safety when it is used, regardless of the flags.)
 	"always_check_in_case_debug_assertions", 
 	
-	# The AutoSafeManuallyDrop/ManuallyDrop type is always SafeManuallyDrop, 
-	# i.e. with traceable behavior.
+	# ManuallyDrop and AutoManuallyDrop are always checked when used, 
+	# regardless of external flags.
+	#
+	# (Also, AlwaysSafeManuallyDrop is always checked for safety when it is used, regardless of the flags.)
 	#"always_safe_manuallydrop",
 	
-	# Mark functions as unsafe even if they are safe 
-	# for std API compatibility.
+	# Enable additional internal checks of the SafeManuallyDrop library when 
+	# the debug_assertions flag is enabled (does not depend on the always_check_in_case_debug_assertions 
+	# and always_safe_manuallydrop options). This flag type only applies to internal 
+	# library function checks, it is independent of ManuallyDrop and its valid or invalid usage.
+	#
+	# "allow_fullinternal_debug_assertions",
+	
+	# Preserve unsafe fn flags even if functions are safe 
+	# (may be required for additional compatibility with the standard API)
 	"always_compatible_stdapi",
+	
+	# Trigs:
+	#
 	
 	# Ability to determine if an empty loop trigger has been executed.
 	"support_istrig_loop",
@@ -35,11 +53,11 @@ default = [
 	
 	# HookManuallyDrop support, in case of undefined HookManuallyDrop behavior, 
 	# the hook function will be called.
-	"support_hookfn_trig" #,
+	"support_hookfn_trig",
 	
 	# Support for CounterManuallyDrop, in case of undefined behavior, 
 	# CounterManuallyDrop will add +1 to the counter.
-	#"support_count_trig" #,
+	#"support_count_trig",
 	
 	# The behavior for the simple AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop type will always 
 	# cause a panic in case of undefined behavior.
@@ -74,6 +92,8 @@ default = [
 ]
 always_check_in_case_debug_assertions = []
 always_safe_manuallydrop = []
+
+allow_fullinternal_debug_assertions = []
 
 support_hookfn_trig = []
 support_count_trig = []
