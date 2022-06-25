@@ -185,6 +185,10 @@ fn main() {
 // (may be required for additional compatibility with the standard API)
 "always_compatible_stdapi",
 
+// Always create a modular table of library flags used in the build.
+// (crate::core::flags)
+"always_build_flagstable",
+
 // Trigs:
 //
 

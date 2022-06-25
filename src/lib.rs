@@ -198,6 +198,10 @@ fn main() {
 // (may be required for additional compatibility with the standard API)
 "always_compatible_stdapi",
 
+// Always create a modular table of library flags used in the build.
+// (crate::core::flags)
+"always_build_flagstable",
+
 // Trigs:
 //
 
@@ -263,7 +267,19 @@ pub mod core {
 	pub mod state;
 	
 	/// Flags used when building this library
+	#[cfg(
+		any(test, feature = "always_build_flagstable")
+	)]
 	pub mod flags;
+	
+	/// Flags used when building this library
+	#[cfg(not(
+		any(test, feature = "always_build_flagstable")
+	))]
+	pub mod flags {
+		/// Whether a table of build flags to use was created when the library was compiled.
+		pub const IS_BUILD_FLAGSTABLE: bool = false;
+	}
 	
 	/// Implementation of behavior in case of detection of 
 	/// undefined manual memory management.

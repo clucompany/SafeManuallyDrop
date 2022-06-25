@@ -41,6 +41,10 @@ default = [
 	# (may be required for additional compatibility with the standard API)
 	"always_compatible_stdapi",
 	
+	# Always create a modular table of library flags used in the build.
+	# (crate::core::flags)
+	"always_build_flagstable",
+	
 	# Trigs:
 	#
 	
@@ -94,6 +98,8 @@ always_check_in_case_debug_assertions = []
 always_safe_manuallydrop = []
 
 allow_fullinternal_debug_assertions = []
+
+always_build_flagstable = []
 
 support_hookfn_trig = []
 support_count_trig = []

@@ -1,4 +1,8 @@
 
+/// Whether a table of build flags to use was created
+/// when the library was compiled.
+pub const IS_BUILD_FLAGSTABLE: bool = true;
+
 /// Depending on the build flag, a protected version of ManuallyDrop or 
 /// an unprotected version of ManuallyDrop with a default trigger.
 pub const IS_SAFE_MODE: bool = crate::ManuallyDrop::is_safe_mode();
@@ -46,6 +50,19 @@ pub const IS_SUPPORT_LOOP_IS_TRIG: bool = {
 	}
 	
 	#[cfg(not(feature = "support_istrig_loop"))] {
+		false
+	}
+};
+
+/// Enable additional internal checks of the SafeManuallyDrop library when 
+/// the debug_assertions flag is enabled (does not depend on the always_check_in_case_debug_assertions 
+/// and always_safe_manuallydrop options).
+pub const IS_FULLINTERNAL_DEBUG_ASSERTIONS: bool = {
+	#[cfg(feature = "allow_fullinternal_debug_assertions")] {
+		true
+	}
+	
+	#[cfg(not(feature = "allow_fullinternal_debug_assertions"))] {
 		false
 	}
 };

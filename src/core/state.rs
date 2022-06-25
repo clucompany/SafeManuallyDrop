@@ -186,7 +186,8 @@ impl StateManuallyDropData {
 		);
 		
 		#[allow(unused_unsafe)]
-		let result: Self = unsafe {
+		let result: StateManuallyDropData = unsafe {
+			// safe, u8 -> StateManuallyDropData (enum)
 			core::mem::transmute(a as u8)
 		};
 		result

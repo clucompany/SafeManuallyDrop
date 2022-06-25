@@ -74,10 +74,12 @@ pub use current_deftrig::DefTrigManuallyDrop;
 
 /// Whether the default behavior autodetection was used for ManuallyDrop.
 #[doc(hidden)]
+#[cfg(any(test, feature = "always_build_flagstable"))]
 pub (crate) use current_deftrig::IS_AUTO_DETECT_DEFTRIG;
 
 /// The build was done using all-features, the required behavior cannot be determined.
 #[doc(hidden)]
+#[cfg(any(test, feature = "always_build_flagstable"))]
 pub (crate) use current_deftrig::IS_INVALID_AUTO_DETECT_DEFTRIG;
 
 /// The safe version of ManuallyDrop loops the current thread in case of undefined behavior, 
