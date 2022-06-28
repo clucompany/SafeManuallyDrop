@@ -26,6 +26,7 @@ macro_rules! trig_manuallydrop_returntype {
 /// A protected version of SafeManuallyDrop with a function to execute a panic 
 /// in case of undefined behavior of the ManuallyDrop logic.
 #[cfg(feature = "support_panic_trig")]
+#[cfg_attr(docsrs, doc(cfg(feature = "support_panic_trig")))]
 pub mod panic;
 
 /// A protected version of SafeManuallyDrop with a function to count 
@@ -33,11 +34,13 @@ pub mod panic;
 /// The undefined behavior of CounterManuallyDrop will be the same as 
 /// when using the standard ManuallyDrop.
 #[cfg(feature = "support_count_trig")]
+#[cfg_attr(docsrs, doc(cfg(feature = "support_count_trig")))]
 pub mod counter;
 
 /// Protected version of the SafeManuallyDrop with an execution 
 /// function in case of undefined behavior of the ManuallyDrop logic.
 #[cfg(feature = "support_hookfn_trig")]
+#[cfg_attr(docsrs, doc(cfg(feature = "support_hookfn_trig")))]
 pub mod hook;
 
 /// Implementation of behavior in case of detection of 
@@ -75,11 +78,13 @@ pub use current_deftrig::DefTrigManuallyDrop;
 /// Whether the default behavior autodetection was used for ManuallyDrop.
 #[doc(hidden)]
 #[cfg(any(test, feature = "always_build_flagstable"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "always_build_flagstable")))]
 pub (crate) use current_deftrig::IS_AUTO_DETECT_DEFTRIG;
 
 /// The build was done using all-features, the required behavior cannot be determined.
 #[doc(hidden)]
 #[cfg(any(test, feature = "always_build_flagstable"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "always_build_flagstable")))]
 pub (crate) use current_deftrig::IS_INVALID_AUTO_DETECT_DEFTRIG;
 
 /// The safe version of ManuallyDrop loops the current thread in case of undefined behavior, 

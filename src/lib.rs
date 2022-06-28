@@ -255,7 +255,7 @@ fn main() {
 */
 
 #![allow(non_snake_case)]
-
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
 
 /// The insecure standard version of ManuallyDrop
@@ -266,16 +266,14 @@ pub mod core {
 	/// Safe States for ManuallyDrop
 	pub mod state;
 	
+	#[cfg_attr(docsrs, doc(cfg(feature = "always_build_flagstable")))]
+	#[cfg( any(test, feature = "always_build_flagstable") )]
 	/// Flags used when building this library
-	#[cfg(
-		any(test, feature = "always_build_flagstable")
-	)]
 	pub mod flags;
 	
+	#[cfg_attr(docsrs, doc(cfg(feature = "always_build_flagstable")))]
+	#[cfg(not( any(test, feature = "always_build_flagstable") ))]
 	/// Flags used when building this library
-	#[cfg(not(
-		any(test, feature = "always_build_flagstable")
-	))]
 	pub mod flags {
 		/// Whether a table of build flags to use was created when the library was compiled.
 		pub const IS_BUILD_FLAGSTABLE: bool = false;
@@ -308,22 +306,26 @@ pub mod beh {
 /// A protected version of ManuallyDrop with a function to 
 /// execute a panic in case of undefined behavior of the ManuallyDrop logic.
 #[cfg(feature = "support_panic_trig")]
+#[cfg_attr(docsrs, doc(cfg(feature = "support_panic_trig")))]
 pub type AlwaysSafePanicManuallyDrop<T> = crate::core::trig::panic::AlwaysSafePanicManuallyDrop<T>;
 
 /// A secure or non-secure version of ManuallyDrop with a function to trigger 
 /// a panic in case of undefined behavior of the ManuallyDrop logic.
 #[cfg(feature = "support_panic_trig")]
+#[cfg_attr(docsrs, doc(cfg(feature = "support_panic_trig")))]
 pub type AutoSafePanicManuallyDrop<T> = crate::core::trig::panic::AutoSafePanicManuallyDrop<T>;
 
 /// Protected or unprotected version of ManuallyDrop with function 
 /// execution in case of undefined behavior of ManuallyDrop logic. 
 #[cfg(feature = "support_hookfn_trig")]
+#[cfg_attr(docsrs, doc(cfg(feature = "support_hookfn_trig")))]
 pub type AlwaysSafeHookManuallyDrop<T> = crate::core::trig::hook::AlwaysSafeHookManuallyDrop<T>;
 
 
 /// Protected or unprotected version of ManuallyDrop with function 
 /// execution in case of undefined behavior of ManuallyDrop logic. 
 #[cfg(feature = "support_hookfn_trig")]
+#[cfg_attr(docsrs, doc(cfg(feature = "support_hookfn_trig")))]
 pub type AutoSafeHookManuallyDrop<T> = crate::core::trig::hook::AutoSafeHookManuallyDrop<T>;
 
 /// A protected version of SafeManuallyDrop with a function to count 
@@ -331,6 +333,7 @@ pub type AutoSafeHookManuallyDrop<T> = crate::core::trig::hook::AutoSafeHookManu
 /// The undefined behavior of CounterManuallyDrop will be the same 
 /// as when using the standard ManuallyDrop.
 #[cfg(feature = "support_count_trig")]
+#[cfg_attr(docsrs, doc(cfg(feature = "support_count_trig")))]
 pub type AlwaysSafeCounterManuallyDrop<T> = crate::core::trig::counter::AlwaysSafeCounterManuallyDrop<T>;
 
 
@@ -339,6 +342,7 @@ pub type AlwaysSafeCounterManuallyDrop<T> = crate::core::trig::counter::AlwaysSa
 /// The undefined behavior of CounterManuallyDrop will be the same as when 
 /// using the standard ManuallyDrop.
 #[cfg(feature = "support_count_trig")]
+#[cfg_attr(docsrs, doc(cfg(feature = "support_count_trig")))]
 pub type AutoSafeCounterManuallyDrop<T> = crate::core::trig::counter::AutoSafeCounterManuallyDrop<T>;
 
 /// The safe version of ManuallyDrop loops the current thread in case of undefined behavior, 
