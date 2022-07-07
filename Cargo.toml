@@ -10,7 +10,7 @@ readme = "README.md"
 
 description = "A safe version of ManuallyDrop with various features and options to track undefined behavior when working with ManuallyDrop."
 keywords = ["safe_manually_drop", "safemanuallydrop", "SafeManuallyDrop", "no_std", "clucompany"]
-categories = ["development-tools"]
+categories = ["development-tools", "development-tools::testing", "development-tools::debugging", "api-bindings", "memory-management"]
 
 [features]
 default = [
