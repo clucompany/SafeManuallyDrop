@@ -25,7 +25,7 @@ crate::__codegen! {
 			new |value| {
 				Self {
 					value,
-					state: StateManuallyDrop::empty(),
+					state: /*StateManuallyDrop::empty()*/ EMPTY_STATE,
 					_pp: PhantomData
 				}
 			}

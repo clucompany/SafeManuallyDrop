@@ -131,6 +131,8 @@ macro_rules! __codegen {
 		use ::core::ops::Deref;
 		use ::core::fmt::Debug;
 		use ::core::hash::Hash;
+		#[allow(unused_imports)]
+		use crate::core::state::EMPTY_STATE;
 		
 		$(
 			$crate::__codegen! {
@@ -168,7 +170,7 @@ macro_rules! __codegen {
 		impl<T, Trig> $current_type<T, Trig> where Trig: TrigManuallyDrop {
 			/// Wrap a value to be manually dropped.
 			#[inline]
-			pub /*const*/ fn new(value: T) -> Self {
+			pub const fn new(value: T) -> Self {
 				let value = UnsafeStdManuallyDrop::new(value);
 				
 				unsafe {
@@ -179,7 +181,7 @@ macro_rules! __codegen {
 			/// Wrap a value to be manually dropped. 
 			/// Unsafe because the UnsafeStdManuallyDrop input argument is in an undefined state.
 			#[inline]
-			pub /*const*/ unsafe fn from_std($new_value_fn: UnsafeStdManuallyDrop<T>) -> Self {
+			pub const unsafe fn from_std($new_value_fn: UnsafeStdManuallyDrop<T>) -> Self {
 				$new_fn
 			}
 			
@@ -195,11 +197,11 @@ macro_rules! __codegen {
 				}
 			}
 			
-			/// Extracts the value from the ManuallyDrop container.
-			#[inline]
-			pub /*const*/ fn into_inner(slot: $current_type<T, Trig>) -> T {
-				$crate::__if_codegen! {
-					if (#$is_safe) {
+			$crate::__if_codegen! {
+				if (#$is_safe) {
+					/// Extracts the value from the ManuallyDrop container.
+					#[inline]
+					pub /*const*/ fn into_inner(slot: $current_type<T, Trig>) -> T {
 						slot.state.to_intoinnermode_or_trig::<Trig>();
 						
 						// into_inner
@@ -213,19 +215,13 @@ macro_rules! __codegen {
 						
 						let _ignore_drop = UnsafeStdManuallyDrop::new(slot);
 						value
-					}else {
-						UnsafeStdManuallyDrop::into_inner(slot.value)
 					}
-				}
-			}
-			
-			/// Extracts the value from the ManuallyDrop container.
-			#[inline]
-			pub /*const*/ fn into_core_inner(slot: $current_type<T, Trig>) -> UnsafeStdManuallyDrop<T> {
-				$crate::__if_codegen! {
-					if (#$is_safe) {
+					
+					/// Extracts the value from the ManuallyDrop container.
+					#[inline]
+					pub /*const*/ fn into_core_inner(slot: $current_type<T, Trig>) -> UnsafeStdManuallyDrop<T> {
 						slot.state.to_intoinnermode_or_trig::<Trig>();
-						
+								
 						// analog UnsafeManuallyDrop::take
 						let mandrop: UnsafeStdManuallyDrop<T> = unsafe {
 							::core::ptr::read(slot.as_unsafestd_manuallydrop())
@@ -233,7 +229,19 @@ macro_rules! __codegen {
 						
 						let _ignore_drop = UnsafeStdManuallyDrop::new(slot);
 						mandrop
-					}else {
+					}
+				}else {
+					/// Extracts the value from the ManuallyDrop container.
+					/// !!!(The unsafe version of the function is identical to the UnsafeStdManuallyDrop::into_inner core.)
+					#[inline]
+					pub const fn into_inner(slot: $current_type<T, Trig>) -> T {
+						UnsafeStdManuallyDrop::into_inner($current_type::into_core_inner(slot))
+					}
+					
+					/// Extracts the value from the ManuallyDrop container.
+					/// !!!(The unsafe version of the function is identical to the UnsafeStdManuallyDrop::into_inner core.)
+					#[inline]
+					pub const fn into_core_inner(slot: $current_type<T, Trig>) -> UnsafeStdManuallyDrop<T> {
 						slot.value
 					}
 				}
@@ -252,7 +260,10 @@ macro_rules! __codegen {
 							}
 						}
 						
-						UnsafeStdManuallyDrop::take(&mut slot.value)
+						#[allow(unused_unsafe)]
+						unsafe { // library provides security guarantees
+							UnsafeStdManuallyDrop::take(&mut slot.value)
+						}
 					}
 				} else {
 					/// Takes the value from the ManuallyDrop<T> container out.
@@ -333,14 +344,20 @@ macro_rules! __codegen {
 						UnsafeStdManuallyDrop::drop(&mut slot.value)
 					}
 					
-					/// Note that the safe ManuallyDrop checks to see if the value is freed when the safe ManuallyDrop struct dies.
-					/// The version of mem::forget is adapted for safe and insecure ManuallyDrop.
-					#[inline(always)]
-					pub unsafe fn ignore_drop(&self) {
-						$crate::__if_codegen! {
-							if (#$is_safe) {
+					$crate::__if_codegen! {
+						if (#$is_safe) {
+							/// Note that the safe ManuallyDrop checks to see if the value is freed when the safe ManuallyDrop struct dies.
+							/// The version of mem::forget is adapted for safe and insecure ManuallyDrop.
+							#[inline(always)]
+							pub unsafe fn ignore_drop(&self) {
 								self.state.to_ignore_trig_when_drop::<Trig>();
 							}
+						} else {
+							/// Note that the safe ManuallyDrop checks to see if the value is freed when the safe ManuallyDrop struct dies.
+							/// The version of mem::forget is adapted for safe and insecure ManuallyDrop.
+							/// !!!(Not supported in insecure version, does nothing).
+							#[inline(always)]
+							pub const unsafe fn ignore_drop(&self) {}
 						}
 					}
 				} else {
@@ -404,14 +421,20 @@ macro_rules! __codegen {
 						}
 					}
 					
-					/// Note that the safe ManuallyDrop checks to see if the value is freed when the safe ManuallyDrop struct dies.
-					/// The version of mem::forget is adapted for safe and insecure ManuallyDrop.
-					#[inline(always)]
-					pub fn ignore_drop(&self) {
-						$crate::__if_codegen! {
-							if (#$is_safe) {
+					$crate::__if_codegen! {
+						if (#$is_safe) {
+							/// Note that the safe ManuallyDrop checks to see if the value is freed when the safe ManuallyDrop struct dies.
+							/// The version of mem::forget is adapted for safe and insecure ManuallyDrop.
+							#[inline(always)]
+							pub fn ignore_drop(&self) {
 								self.state.to_ignore_trig_when_drop::<Trig>();
 							}
+						} else {
+							/// Note that the safe ManuallyDrop checks to see if the value is freed when the safe ManuallyDrop struct dies.
+							/// The version of mem::forget is adapted for safe and insecure ManuallyDrop.
+							/// !!!(Not supported in insecure version, does nothing).
+							#[inline(always)]
+							pub const fn ignore_drop(&self) {}
 						}
 					}
 				}
@@ -419,9 +442,8 @@ macro_rules! __codegen {
 			}
 			
 			
-			
 			#[inline(always)]
-			pub unsafe fn as_unsafestd_manuallydrop(&self) -> &UnsafeStdManuallyDrop<T> {
+			pub const unsafe fn as_unsafestd_manuallydrop(&self) -> &UnsafeStdManuallyDrop<T> {
 				let $sself_as_unsafestd_manuallydrop = self;
 				
 				$as_unsafestd_manuallydrop
@@ -437,37 +459,97 @@ macro_rules! __codegen {
 			/// Is ManuallyDrop a wrapper with values, or is it actually a transparent 
 			/// value with no false data. 
 			#[inline(always)]
-			pub fn is_repr_transparent(&self) -> bool {
+			pub const fn is_repr_transparent(&self) -> bool {
 				$is_repr_transparent
 			}
 			
-			#[inline]
-			pub fn get_state(&self) -> Option<StateManuallyDropData> {
-				$crate::__if_codegen! {
-					if (#$is_safe) {
+			$crate::__if_codegen! {
+				if (#$is_safe) {
+					/// Get current state
+					#[inline]
+					pub /*const*/ fn get_state(&self) -> Option<StateManuallyDropData> {
 						// Safe
 						Some(self.state.read())
-					}else {
-						// Unsafe
-						None
 					}
-				}
-			}
-			
-			/// Checking if a trigger that defines undefined behavior will fire.
-			/// Some(true) - means that the state is empty and you can work with the value later.
-			/// Some(false) means that the value has already been converted by some method, and 
-			/// further work with the value will cause an undefined behavior trigger.
-			/// None - This version of ManuallyDrop is stateless, so defining undefined behavior 
-			/// is not possible.
-			#[inline]
-			pub fn is_empty_state(&self) -> Option<bool> {
-				$crate::__if_codegen! {
-					if (#$is_safe) {
+					
+					/// Checking if a trigger that defines undefined behavior will fire.
+					/// Some(true) - means that the state is empty and you can work with the value later.
+					/// Some(false) means that the value has already been converted by some method, and 
+					/// further work with the value will cause an undefined behavior trigger.
+					/// None - This version of ManuallyDrop is stateless, so defining undefined behavior 
+					/// is not possible.
+					#[inline]
+					pub fn is_empty_state(&self) -> Option<bool> {
 						// Safe
 						Some(self.state.is_empty())
-					}else {
-						// Unsafe
+					}
+					
+					/// Resets the ManuallyDrop state to its original state and returns the previous state.
+					#[inline]
+					pub unsafe fn get_state_and_reset(&self) -> Option<StateManuallyDropData> {
+						// Safe
+						Some(self.state.get_and_reset())
+					}
+					
+					/// Checking if a trigger that defines undefined behavior will fire. 
+					/// false - means the state is empty and you can work with the value in the future.
+					/// - true means the value has already been converted by some method.
+					#[inline]
+					pub fn is_next_trig(&self) -> bool {
+						self.state.is_next_trig()
+					}
+					
+					/// Checking if a trigger that defines undefined behavior will fire.
+					/// Some(false) - means that the state is empty and you can work with the value later.
+					/// Some(true) means that the value has already been converted by some method, and further work with the value will cause an undefined behavior trigger.
+					/// None - This version of ManuallyDrop is stateless, so defining undefined behavior is not possible.
+					#[inline]
+					pub fn is_next_trig_optionresult(&self) -> Option<bool> {
+						Some(self.state.is_next_trig())
+					}
+				} else {
+					/// Get current state
+					/// !!!(Not supported in the unsafe version, always returns None).
+					#[inline(always)]
+					pub const fn get_state(&self) -> Option<StateManuallyDropData> {
+						None
+					}
+					
+					/// Checking if a trigger that defines undefined behavior will fire.
+					/// Some(true) - means that the state is empty and you can work with the value later.
+					/// Some(false) means that the value has already been converted by some method, and 
+					/// further work with the value will cause an undefined behavior trigger.
+					/// None - This version of ManuallyDrop is stateless, so defining undefined behavior 
+					/// is not possible.
+					/// !!!(Not supported in the unsafe version, always returns None).
+					#[inline]
+					pub const fn is_empty_state(&self) -> Option<bool> {
+						None
+					}
+					
+					/// Resets the ManuallyDrop state to its original state and returns the previous state.
+					/// !!!(Not supported in the unsafe version, always returns None).
+					#[inline(always)]
+					pub const unsafe fn get_state_and_reset(&self) -> Option<StateManuallyDropData> {
+						None
+					}
+					
+					/// Checking if a trigger that defines undefined behavior will fire. 
+					/// false - means the state is empty and you can work with the value in the future.
+					/// - true means the value has already been converted by some method.
+					/// !!!(Not supported in the unsafe version, always returns false).
+					#[inline(always)]
+					pub const fn is_next_trig(&self) -> bool {
+						false
+					}
+					
+					/// Checking if a trigger that defines undefined behavior will fire.
+					/// Some(false) - means that the state is empty and you can work with the value later.
+					/// Some(true) means that the value has already been converted by some method, and further work with the value will cause an undefined behavior trigger.
+					/// None - This version of ManuallyDrop is stateless, so defining undefined behavior is not possible.
+					/// !!!(Not supported in the unsafe version, always returns None).
+					#[inline(always)]
+					pub const fn is_next_trig_optionresult(&self) -> Option<bool> {
 						None
 					}
 				}
@@ -475,21 +557,21 @@ macro_rules! __codegen {
 			
 			/// Get a raw pointer to a value. The call is always insecure.
 			#[inline(always)]
-			pub unsafe fn force_as_ptr(&self) -> *const T {
+			pub /*const*/ unsafe fn force_as_ptr(&self) -> *const T {
 				// TODO, VALID?, Exp: ManuallyDrop::as_ptr
 				self.force_as_value() as _
 			}
 			
 			/// Get a raw mut pointer to a value. The call is always insecure.
 			#[inline(always)]
-			pub unsafe fn force_as_mut_ptr(&mut self) -> *mut T {
+			pub /*const*/ unsafe fn force_as_mut_ptr(&mut self) -> *mut T {
 				// TODO, VALID?, Exp: ManuallyDrop::as_mut_ptr
 				self.force_as_mut_value() as _
 			}
 
 			/// Get reference to value. Always unprotected!
 			#[inline(always)]
-			pub unsafe fn force_as_value(&self) -> &T {
+			pub /*const*/ unsafe fn force_as_value(&self) -> &T {
 				let $sself_force_as_value = self;
 				
 				$force_as_value_fn
@@ -497,60 +579,17 @@ macro_rules! __codegen {
 			
 			/// Get a mutable reference to a value. Always unprotected!
 			#[inline(always)]
-			pub unsafe fn force_as_mut_value(&mut self) -> &mut T {
+			pub /*const*/ unsafe fn force_as_mut_value(&mut self) -> &mut T {
 				let $sself_force_as_mut_value = self;
 				
 				$force_as_mut_value_fn
 			}
 			
-			
 			/// Safe or insecure version of ManuallyDrop.
 			#[inline(always)]
-			pub /*const*/ fn is_safe_type(&self) -> bool {
+			pub const fn is_safe_type(&self) -> bool {
 				$is_safe
 			}
-			
-			/// Resets the ManuallyDrop state to its original state and returns the previous state.
-			#[inline(always)]
-			pub unsafe fn get_state_and_reset(&self) -> Option<StateManuallyDropData> {
-				$crate::__if_codegen! {
-					if (#$is_safe) {
-						Some(self.state.get_and_reset())
-					} else {
-						None
-					}
-				}
-			}
-			
-			/// Checking if a trigger that defines undefined behavior will fire. 
-			/// false - means the state is empty and you can work with the value in the future.
-			/// - true means the value has already been converted by some method.
-			#[inline(always)]
-			pub fn is_next_trig(&self) -> bool {
-				$crate::__if_codegen! {
-					if (#$is_safe) {
-						return self.state.is_next_trig();
-					}else {
-						return false;
-					}
-				}
-			}
-			
-			/// Checking if a trigger that defines undefined behavior will fire.
-			/// Some(false) - means that the state is empty and you can work with the value later.
-			/// Some(true) means that the value has already been converted by some method, and further work with the value will cause an undefined behavior trigger.
-			/// None - This version of ManuallyDrop is stateless, so defining undefined behavior is not possible.
-			#[inline(always)]
-			pub fn is_next_trig_optionresult(&self) -> Option<bool> {
-				$crate::__if_codegen! {
-					if (#$is_safe) {
-						return Some(self.state.is_next_trig());
-					}else {
-						return None;
-					}
-				}
-			}
-			
 		}
 		
 		// #[derive(/*Copy, */Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]:

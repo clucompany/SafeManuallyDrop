@@ -185,7 +185,13 @@ impl StateManuallyDropData {
 			true
 		);
 		
-		#[allow(unused_unsafe)]
+		Self::__force_form(a)
+	}
+	
+	/// Create a state from a byte quickly and without checks 
+	/// (important, the byte is checked anyway, but only in a debug build)
+	#[inline(always)]
+	const fn __force_form(a: u8) -> Self {
 		let result: StateManuallyDropData = unsafe {
 			// safe, u8 -> StateManuallyDropData (enum)
 			core::mem::transmute(a as u8)
@@ -212,17 +218,27 @@ impl StateManuallyDropData {
 	}
 }
 
+/// Empty state, needed only for some implementations of const functions.
+pub const EMPTY_STATE: StateManuallyDrop = StateManuallyDrop::__empty();
+
 impl StateManuallyDrop {
 	/// Create default state
 	#[inline(always)]
 	pub /*const*/ fn empty() -> Self {
-		let sself = Self {
-			state: AtomicU8::new(StateManuallyDropData::empty() as _)
-		};
+		let sself = Self::__empty();
+		
 		crate::__fullinternal_debug_assertions!(sself.is_empty(), true);
 		crate::__fullinternal_debug_assertions!(sself.is_next_trig(), false);
 		
 		sself
+	}
+	
+	/// Create default state
+	#[inline(always)]
+	const fn __empty() -> Self {
+		Self {
+			state: AtomicU8::new(StateManuallyDropData::empty() as _)
+		}
 	}
 	
 	/// Whether the current state is like a new unused object.
@@ -387,6 +403,17 @@ fn test_state() {
 	
 	state.deref_or_trig::<PanicTrigManuallyDrop>(); // ok
 }
+
+#[cfg(all(test, feature = "support_panic_trig"))]
+#[test]
+fn test_const_empty_state() {
+	let state = EMPTY_STATE; // Copy
+	assert_eq!(state.is_empty(), true);
+	assert_eq!(state.is_next_trig(), false);
+	
+	state.deref_or_trig::<PanicTrigManuallyDrop>(); // ok
+}
+
 
 #[cfg(all(test, feature = "support_panic_trig"))]
 #[test]
