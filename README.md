@@ -10,7 +10,7 @@ A safe version of ManuallyDrop with various features and options to track undefi
 
 ### 1. easy
 
-```should_panic
+```rust,should_panic
 use SafeManuallyDrop::ManuallyDrop;
 use std::ops::Deref;
 
