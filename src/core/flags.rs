@@ -1,4 +1,6 @@
 
+//! Flags used when building this library
+
 /// Whether a table of build flags to use was created
 /// when the library was compiled.
 pub const IS_BUILD_FLAGSTABLE: bool = true;
@@ -25,6 +27,17 @@ pub const IS_SUPPORT_HOOKFN_TRIG: bool = {
 	}
 	
 	#[cfg(not(feature = "support_hookfn_trig"))] {
+		false
+	}
+};
+
+/// Whether the library build flag was used to support abort_trig.
+pub const IS_SUPPORT_ABORT_TRIG: bool = {
+	#[cfg(feature = "support_abort_trig")] {
+		true
+	}
+	
+	#[cfg(not(feature = "support_abort_trig"))] {
 		false
 	}
 };

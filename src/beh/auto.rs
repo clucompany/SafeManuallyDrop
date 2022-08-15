@@ -1,4 +1,7 @@
 
+//! Depending on the build flag, a protected version of ManuallyDrop 
+//! or an unprotected version of ManuallyDrop.
+
 /// An internal macro that replaces many built-in assembly safety checks for 
 /// the default ManuallyDrop type.
 /// 

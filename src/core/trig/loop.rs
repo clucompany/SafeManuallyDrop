@@ -30,7 +30,7 @@ pub type AutoSafeEmptyLoopManuallyDrop<T> = crate::beh::auto::AutoSafeManuallyDr
 pub enum EmptyLoopTrigManuallyDrop {}
 
 impl TrigManuallyDrop for EmptyLoopTrigManuallyDrop {
-	#[inline(always)]
+	#[inline]
 	fn trig_next_invalid_beh<'a>(_a: Arguments<'a>) -> trig_manuallydrop_returntype!() {
 		#[cfg(feature = "support_istrig_loop")] {
 			unsafe {
@@ -42,6 +42,8 @@ impl TrigManuallyDrop for EmptyLoopTrigManuallyDrop {
 	}
 }
 
+/// Globally marks the presence state of a 
+/// looped thread when undefined behavior is detected.
 #[cfg(feature = "support_istrig_loop")]
 #[inline]
 pub unsafe fn trig_next_invalid_beh() {
@@ -51,7 +53,14 @@ pub unsafe fn trig_next_invalid_beh() {
 	);
 }
 
-/// Get the number of times the undefined behavior was triggered.
+/// Globally marks the presence state of a 
+/// looped thread when undefined behavior is detected.
+#[cfg(not(feature = "support_istrig_loop"))]
+#[inline]
+pub const unsafe fn trig_next_invalid_beh() {}
+
+/// Check if at least one thread has been globally 
+/// looped to avoid undefined behavior.
 #[cfg(feature = "support_istrig_loop")]
 #[inline]
 pub fn is_trig_next_invalid_beh() -> bool {
@@ -60,16 +69,17 @@ pub fn is_trig_next_invalid_beh() -> bool {
 	)
 }
 
-/// Get the number of times the undefined behavior was triggered.
+/// Check if at least one thread has been globally 
+/// looped to avoid undefined behavior.
+/// (Because `support_istrig_loop` is disabled, this function will always return false.)
 #[cfg(not(feature = "support_istrig_loop"))]
 #[inline]
-pub fn is_trig_next_invalid_beh() -> bool {
+pub const fn is_trig_next_invalid_beh() -> bool {
 	false
 }
 
-
 impl AutoSafeEmptyLoopManuallyDrop<()> {
-	/// Get the number of times the undefined behavior was triggered.
+	/// Check if at least one thread has been globally looped to avoid undefined behavior.
 	#[inline(always)]
 	pub fn is_trig_next_invalid_beh() -> bool {
 		crate::core::trig::r#loop::is_trig_next_invalid_beh()

@@ -29,6 +29,12 @@ macro_rules! trig_manuallydrop_returntype {
 #[cfg_attr(docsrs, doc(cfg(feature = "support_panic_trig")))]
 pub mod panic;
 
+/// A protected version of SafeManuallyDrop with a function to execute a abort 
+/// in case of undefined behavior of the ManuallyDrop logic.
+#[cfg(feature = "support_abort_trig")]
+#[cfg_attr(docsrs, doc(cfg(feature = "support_abort_trig")))]
+pub mod abort;
+
 /// A protected version of SafeManuallyDrop with a function to count 
 /// the amount of undefined behavior of the ManuallyDrop logic. 
 /// The undefined behavior of CounterManuallyDrop will be the same as 
@@ -43,16 +49,9 @@ pub mod counter;
 #[cfg_attr(docsrs, doc(cfg(feature = "support_hookfn_trig")))]
 pub mod hook;
 
-/// Implementation of behavior in case of detection of 
-/// undefined manual memory management.
-pub trait TrigManuallyDrop {
-	/// Implementation of behavior in case of detection of 
-	/// undefined manual memory management.
-	fn trig_next_invalid_beh<'a>(a: Arguments<'a>) -> trig_manuallydrop_returntype!();
-}
-
 #[cfg(any(
 	feature = "always_deftrig_panic",
+	feature = "always_deftrig_abort",
 	feature = "always_deftrig_hookfn",
 	feature = "always_deftrig_count",
 	feature = "always_deftrig_loop",
@@ -64,6 +63,7 @@ pub mod current_deftrig;
 #[cfg(all(
 	not(feature = "always_deftrig_panic"),
 	not(feature = "always_deftrig_hookfn"),
+	not(feature = "always_deftrig_abort"),
 	not(feature = "always_deftrig_count"),
 	not(feature = "always_deftrig_loop")
 ))]
@@ -92,3 +92,10 @@ pub (crate) use current_deftrig::IS_INVALID_AUTO_DETECT_DEFTRIG;
 /// thread looped. 
 pub mod r#loop;
 
+/// Implementation of behavior in case of detection of 
+/// undefined manual memory management.
+pub trait TrigManuallyDrop {
+	/// Implementation of behavior in case of detection of 
+	/// undefined manual memory management.
+	fn trig_next_invalid_beh<'a>(a: Arguments<'a>) -> trig_manuallydrop_returntype!();
+}

@@ -45,6 +45,7 @@ pub fn take_hook() -> HookFunction {
 #[inline(always)]
 pub fn run_hook<'a>(args: Arguments<'a>) -> trig_manuallydrop_returntype!() {
 	let trig_fn = take_hook();
+	
 	trig_fn(args)
 }
 

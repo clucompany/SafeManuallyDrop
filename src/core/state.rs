@@ -1,4 +1,6 @@
 
+//! AtomicStates for ManuallyDrop
+
 #[cfg(all(test, feature = "support_panic_trig"))]
 use crate::core::trig::panic::PanicTrigManuallyDrop;
 use core::fmt::Display;

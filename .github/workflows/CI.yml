@@ -34,4 +34,11 @@ jobs:
       run: cargo test --no-default-features --lib --verbose
     - name: Run cargo alltest
       run: cargo test --all-features --verbose
-
+    - name: PanicManDrop
+      run: cargo test --no-default-features --features always_build_flagstable,allow_fullinternal_debug_assertions,always_check_in_case_debug_assertions,always_deftrig_panic,support_panic_trig --lib --verbose
+    - name: AbortManDrop
+      run: cargo test --no-default-features --features always_build_flagstable,allow_fullinternal_debug_assertions,always_check_in_case_debug_assertions,always_deftrig_abort,support_abort_trig --lib --verbose
+    - name: HookFnManDrop
+      run: cargo test --no-default-features --features always_build_flagstable,allow_fullinternal_debug_assertions,always_check_in_case_debug_assertions,always_deftrig_hookfn,support_hookfn_trig --lib --verbose
+    - name: CountFnManDrop
+      run: cargo test --no-default-features --features always_build_flagstable,allow_fullinternal_debug_assertions,always_check_in_case_debug_assertions,always_deftrig_count,support_count_trig --lib --verbose

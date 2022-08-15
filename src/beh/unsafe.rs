@@ -1,4 +1,6 @@
 
+//! Insecure standard implementation of manual memory management.
+
 use core::marker::PhantomData;
 use crate::UnsafeStdManuallyDrop;
 use crate::core::trig::TrigManuallyDrop;

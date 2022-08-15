@@ -1,12 +1,28 @@
 
 use core::fmt::Arguments;
 use crate::core::trig::TrigManuallyDrop;
-use core::sync::atomic::AtomicU32;
-use core::sync::atomic::Ordering;
 
-static COUNT_TRIG_SAFEMANUALLYDROP: AtomicU32 = AtomicU32::new(0);
-const DEF_SETORDERING: Ordering = Ordering::SeqCst;
-const DEF_GETORDERING: Ordering = Ordering::Relaxed;
+mod __internal_counter_logic {
+	use core::sync::atomic::AtomicU32;
+	use core::sync::atomic::Ordering;
+
+	static COUNT_TRIG_SAFEMANUALLYDROP: AtomicU32 = AtomicU32::new(0);
+	
+	const DEF_SETORDERING: Ordering = Ordering::SeqCst;
+	const DEF_GETORDERING: Ordering = Ordering::Relaxed;
+	
+	/// Manually add add to counter +1
+	#[inline]
+	pub unsafe fn trig_next_invalid_beh() {
+		COUNT_TRIG_SAFEMANUALLYDROP.fetch_add(1, DEF_SETORDERING);
+	}
+	
+	/// Get the number of times the undefined behavior was triggered.
+	#[inline]
+	pub fn get_count_trig_events() -> u32 {
+		COUNT_TRIG_SAFEMANUALLYDROP.load(DEF_GETORDERING)
+	}
+}
 
 /// A protected version of SafeManuallyDrop with a function to count the amount of undefined behavior of the ManuallyDrop logic. 
 /// The undefined behavior of CounterManuallyDrop will be the same as when using the standard ManuallyDrop.
@@ -18,6 +34,8 @@ pub type AlwaysSafeCounterManuallyDrop<T> = crate::beh::safe::SafeManuallyDrop<T
 /// using the standard ManuallyDrop.
 pub type AutoSafeCounterManuallyDrop<T> = crate::beh::auto::AutoSafeManuallyDrop<T, CounterTrigManuallyDrop>;
 
+/// On undefined behavior, ManuallyDrop enables the undefined behavior, 
+/// but increments the global counter by +1 each time it detects undefined behavior.
 pub enum CounterTrigManuallyDrop {}
 
 impl TrigManuallyDrop for CounterTrigManuallyDrop {
@@ -33,13 +51,13 @@ impl TrigManuallyDrop for CounterTrigManuallyDrop {
 /// Manually add add to counter +1
 #[inline]
 pub unsafe fn trig_next_invalid_beh() {
-	COUNT_TRIG_SAFEMANUALLYDROP.fetch_add(1, DEF_SETORDERING);
+	__internal_counter_logic::trig_next_invalid_beh();
 }
 
 /// Get the number of times the undefined behavior was triggered.
 #[inline]
 pub fn get_count_trig_events() -> u32 {
-	COUNT_TRIG_SAFEMANUALLYDROP.load(DEF_GETORDERING)
+	__internal_counter_logic::get_count_trig_events()
 }
 
 impl AutoSafeCounterManuallyDrop<()> {
@@ -53,8 +71,14 @@ impl AutoSafeCounterManuallyDrop<()> {
 #[cfg(test)]
 #[test]
 fn test_counter_trig_manuallydrop() {
+	use core::sync::atomic::AtomicU32;
+	use core::sync::atomic::Ordering;
+	
+	const DEF_SETORDERING: Ordering = Ordering::SeqCst;
+	const DEF_GETORDERING: Ordering = Ordering::Relaxed;
+	
 	static __TEST_COUNTER: AtomicU32 = AtomicU32::new(0);
-	struct __Test { }
+	struct __Test;
 	impl Drop for __Test {
 		#[inline]
 		fn drop(&mut self) {
@@ -62,10 +86,9 @@ fn test_counter_trig_manuallydrop() {
 		}
 	}
 	
-	let mut check_data = AlwaysSafeCounterManuallyDrop::new(__Test {
-		
-	});
+	let mut check_data = AlwaysSafeCounterManuallyDrop::new(__Test);
 	
+	#[allow(unused_unsafe)]
 	unsafe { // combo drop
 		AlwaysSafeCounterManuallyDrop::drop(&mut check_data);
 		assert_eq!(AlwaysSafeCounterManuallyDrop::get_count_trig_events(), 0);

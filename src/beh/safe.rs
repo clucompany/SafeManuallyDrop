@@ -1,4 +1,6 @@
 
+//! A safe version of the insecure manual control of freeing memory.
+
 use crate::UnsafeStdManuallyDrop;
 use crate::core::trig::TrigManuallyDrop;
 use core::marker::PhantomData;
