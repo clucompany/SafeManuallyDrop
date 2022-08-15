@@ -10,7 +10,7 @@ A safe version of ManuallyDrop with various features and options to track undefi
 
 ### 1. easy
 
-```rust
+```should_panic
 use SafeManuallyDrop::ManuallyDrop;
 use std::ops::Deref;
 
@@ -53,7 +53,90 @@ fn main() {
 }
 ```
 
-### 2. hook
+### 2. EasyStruct
+
+```rust
+// 1. In production code, it is recommended to use AutoSafe instead of AlwaysSafe, 
+// this will eliminate unnecessary checks in the release build, but leave 
+// them in the test build.
+//
+// 2. It is generally recommended to use Panic or Abort as a trigger for undefined behavior.
+//
+use SafeManuallyDrop::AlwaysSafePanicManuallyDrop as ManuallyDrop;
+
+#[derive(Default, Debug)]
+struct ControlDrop(usize);
+
+// Properly created and validated MyLogicData structure.
+#[derive(Default)]
+struct MyLogicData {
+	data: ManuallyDrop<ControlDrop>
+}
+
+impl MyLogicData {
+	/// Exceptional logic. As a result, the original value will always be returned.
+	pub fn ignore_mylogic_and_getdata(mut self) -> ControlDrop {
+		// Note that you can only `take` once, any further operation with 
+		// ManuallyDrop will cause a panic.
+		let data = unsafe {
+			ManuallyDrop::take(&mut self.data)
+		};
+		
+		// ManuallyDrop::forget analog forget(self).
+		ManuallyDrop::forget(self);
+		
+		/*
+			data logic
+		*/
+		
+		data
+	}
+}
+
+impl Drop for MyLogicData {
+	fn drop(&mut self) {
+		/*
+			def logic
+		*/
+		println!("MyLogicData, indata: {:?}", self.data);
+		
+		/*
+			Notification
+			1. `ManuallyDrop` always requires it to be freed when it is no longer needed.
+			2. Once `ManuallyDrop` is freed, you will not be able to read data from it
+			3. You cannot drop `ManuallyDrop` twice.
+			...
+			
+			You can remove the `unsafe` flags if you don't use the `always_compatible_stdapi` flag.
+		*/
+		unsafe {
+			ManuallyDrop::drop(&mut self.data);
+		}
+	}
+}
+
+fn main() {
+	{
+		// run my logic
+		let indata = MyLogicData::default();
+		drop(indata);
+		
+		// This case will just make the logic default by executing the code in drop.
+	}
+	{
+		// ignore_mylogic
+		let indata = MyLogicData::default();
+		let cd_data = indata.ignore_mylogic_and_getdata();
+	
+		println!("ignore_mylogic: {:?}", cd_data);
+		
+		// In this case, the standard reset logic is eliminated and another 
+		// specific principle is used, which is embedded in the function with data return.
+	}
+}
+```
+
+### 3. hook
 
 ```rust
 use std::ops::Deref;
@@ -93,7 +176,7 @@ fn main() {
 }
 ```
 
-### 3. counter
+### 4. counter
 
 ```rust
 // Let me remind you that CounterManuallyDrop by behavior allows undefined 
@@ -155,12 +238,56 @@ fn main() {
 }
 ```
 
+### 1. PlugAndPlay (Minimal, Panic)
+```rust,ignore
+[dependencies.SafeManuallyDrop]
+version = "1.0.3"
+default-features = false
+features = [
+	"always_check_in_case_debug_assertions", 
+	
+	#"always_compatible_stdapi",
+	
+	"support_panic_trig",
+	"always_deftrig_panic"
+]
+```
+
+### 2. PlugAndPlay (Minimal, Abort)
+```rust,ignore
+[dependencies.SafeManuallyDrop]
+version = "1.0.3"
+default-features = false
+features = [
+	"always_check_in_case_debug_assertions", 
+	
+	#"always_compatible_stdapi",
+	
+	"support_abort_trig",
+	"always_deftrig_abort"
+]
+```
+
+### 3. PlugAndPlay (Minimal, Hook)
+```rust,ignore
+[dependencies.SafeManuallyDrop]
+version = "1.0.3"
+default-features = false
+features = [
+	"always_check_in_case_debug_assertions", 
+	
+	#"always_compatible_stdapi",
+	
+	"support_hookfn_trig",
+	"always_deftrig_hookfn"
+]
+```
+
 # cargo.toml -> features
 
-```
+```rust,ignore
 // Flags:
 //
-	
 // ManuallyDrop and AutoManuallyDrop are always type safe and are automatically 
 // checked on use if the debug_assertions flag is enabled (the flag is automatically 
 // enabled if test build, debug build, or env: CARGO_PROFILE_RELEASE_DEBUG_ASSERTIONS=true).
@@ -172,7 +299,7 @@ fn main() {
 // regardless of external flags.
 //
 // (Also, AlwaysSafeManuallyDrop is always checked for safety when it is used, regardless of the flags.)
-// "always_safe_manuallydrop",
+//"always_safe_manuallydrop",
 
 // Enable additional internal checks of the SafeManuallyDrop library when 
 // the debug_assertions flag is enabled (does not depend on the always_check_in_case_debug_assertions 
@@ -181,8 +308,8 @@ fn main() {
 //
 // "allow_fullinternal_debug_assertions",
 
-// Preserve unsafe fn flags even if functions are safe 
-// (may be required for additional compatibility with the standard API)
+# Preserve unsafe fn flags even if functions are safe 
+# (may be required for additional compatibility with the standard API)
 "always_compatible_stdapi",
 
 // Always create a modular table of library flags used in the build.
@@ -191,13 +318,16 @@ fn main() {
 
 // Trigs:
 //
-
 // Ability to determine if an empty loop trigger has been executed.
 "support_istrig_loop",
 
 // Support for PanicManuallyDrop, in case of undefined behavior 
-// of PanicManuallyDrop there will be a panic.
-"support_panic_trig", 
+// of ManuallyDrop there will be a panic.
+"support_panic_trig",
+
+// Support for AbortManuallyDrop, in case of undefined behavior 
+// of ManuallyDrop there will be a abort. (Note that this feature requires std.)
+//"support_abort_trig",
 
 // HookManuallyDrop support, in case of undefined HookManuallyDrop behavior, 
 // the hook function will be called.
@@ -212,8 +342,12 @@ fn main() {
 //"always_deftrig_panic",
 
 // The behavior for the simple AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop type will always 
+// cause a abort in case of undefined behavior.
+//"always_deftrig_abort",
+
+// The behavior for the simple AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop type will always 
 // call the hook function in case of undefined behavior.
-//"always_deftrig_hookfn",
+"always_deftrig_hookfn",
 
 // The behavior for the simple AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop type will always call 
 // the +1 counter function in case of undefined behavior.
@@ -222,21 +356,6 @@ fn main() {
 // The behavior for the simple type AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop will always call 
 // the eternal loop function in case of undefined behavior.
 //"always_deftrig_loop"
-
-// INFO:
-// If the behavior for the general AutoSafeManuallyDrop/AlwaysSafeManuallyDrop/ManuallyDrop is not fixed, 
-// the behavior will be determined according to the following scheme:
-//
-//	always_deftrig_panic not exists AND
-//	always_deftrig_hookfn not exists AND
-//	always_deftrig_count not exists AND
-//	always_deftrig_loop not exists THEN
-//
-//	support_hookfn_trig -> Hook,	else:
-//	support_panic_trig -> Panic,	else:
-//	support_count_trig -> Count,	else:
-//		Loop
-//
 ```
 
 # License
