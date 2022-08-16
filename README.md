@@ -308,8 +308,8 @@ features = [
 //
 // "allow_fullinternal_debug_assertions",
 
-# Preserve unsafe fn flags even if functions are safe 
-# (may be required for additional compatibility with the standard API)
+// Preserve unsafe fn flags even if functions are safe 
+// (may be required for additional compatibility with the standard API)
 "always_compatible_stdapi",
 
 // Always create a modular table of library flags used in the build.
