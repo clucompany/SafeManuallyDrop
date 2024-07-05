@@ -1,4 +1,3 @@
-
 /// Asserts that a boolean expression is `true` at runtime.
 ///
 /// This will invoke the [`panic!`] macro if the provided expression cannot be
@@ -22,14 +21,9 @@
 /// of assertions, however, is not measurable in general. Replacing [`assert!`]
 /// with `debug_assert!` is thus only encouraged after thorough profiling, and
 /// more importantly, only in safe code!
-/// 
+///
 /// Source: rust std debug_assert.
-#[doc(hidden)]
-#[macro_export]
-#[cfg(all(
-	feature = "allow_fullinternal_debug_assertions",
-	debug_assertions
-))]
+#[cfg(all(feature = "allow_fullinternal_debug_assertions", debug_assertions))]
 macro_rules! __fullinternal_debug_assertions {
 	( $($all:tt)* ) => {
 		assert_eq!($($all)*)
@@ -61,14 +55,9 @@ macro_rules! __fullinternal_debug_assertions {
 /// more importantly, only in safe code!
 ///
 /// Source: rust std debug_assert.
-#[doc(hidden)]
-#[macro_export]
-#[cfg(not(all(
-	feature = "allow_fullinternal_debug_assertions",
-	debug_assertions
-)))]
+#[cfg(not(all(feature = "allow_fullinternal_debug_assertions", debug_assertions)))]
 macro_rules! __fullinternal_debug_assertions {
-	( $($all:tt)* ) => {
-		
-	}
+	( $($all:tt)* ) => {};
 }
+
+pub(crate) use __fullinternal_debug_assertions;

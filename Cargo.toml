@@ -1,6 +1,6 @@
 [package]
 name = "SafeManuallyDrop"
-version = "1.0.3"
+version = "1.0.4"
 authors = ["Denis Kotlyarov (Денис Котляров) <denis2005991@gmail.com>"]
 repository = "https://github.com/clucompany/SafeManuallyDrop.git"
 edition = "2021"

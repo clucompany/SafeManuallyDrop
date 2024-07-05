@@ -1,43 +1,8 @@
-
-//! Depending on the build flag, a protected version of ManuallyDrop 
+//! Depending on the build flag, a protected version of ManuallyDrop
 //! or an unprotected version of ManuallyDrop.
 
-/// An internal macro that replaces many built-in assembly safety checks for 
+/// An internal macro that replaces many built-in assembly safety checks for
 /// the default ManuallyDrop type.
-/// 
-///	example0:
-///	```rust
-///	SafeManuallyDrop::cfg_if_safemode! {
-///		// Unsafe
-///		// Depending on the build flag, a protected version of ManuallyDrop or 
-///		// an unprotected version of ManuallyDrop with a default trigger.
-///		#if_not_safe(pub type ManuallyDrop<T> = SafeManuallyDrop::beh::r#unsafe::UnsafeManuallyDrop<T, SafeManuallyDrop::core::trig::DefTrigManuallyDrop>;)
-///
-///		// Safe
-///		// Depending on the build flag, a protected version of ManuallyDrop or 
-///		// an unprotected version of ManuallyDrop with a default trigger.
-///		#if_safe(pub type ManuallyDrop<T> = SafeManuallyDrop::beh::safe::SafeManuallyDrop<T, SafeManuallyDrop::core::trig::DefTrigManuallyDrop>;)
-///	}
-///	```
-/// 
-///	example1:
-///	```rust
-///	// Depending on the build flag, a protected version of ManuallyDrop or 
-///	// an unprotected version of ManuallyDrop with a default trigger.
-///	#[inline(always)]
-///	pub const fn is_safe_mode() -> bool {
-///		SafeManuallyDrop::cfg_if_safemode! {
-///			#if_safe() {
-///				true
-///			}else {
-///				false
-///			}
-///		}
-///	}
-///	```
-/// 
-#[doc(hidden)]
-#[macro_export]
 macro_rules! cfg_if_safemode {
 	[ #if_safe() { $($all:tt)* } $( else $($else_all:tt)* )? /*$($macros_data:tt)**/ ] => {
 		{
@@ -49,7 +14,7 @@ macro_rules! cfg_if_safemode {
 			)] {
 				$($all)*
 			}
-			
+
 			$(
 				#[cfg(not(
 					any(
@@ -61,12 +26,12 @@ macro_rules! cfg_if_safemode {
 				}
 			)?
 		}
-		
+
 		/*$crate::cfg_if_safemode! {
 			$($macros_data)*
 		}*/
 	};
-	
+
 	[
 		$(#[$($meta:tt)*])*
 		#if_safe ( $($all:tt)* )  $($macros_data:tt)*
@@ -79,12 +44,12 @@ macro_rules! cfg_if_safemode {
 		)]
 			$(#[$($meta)*])*
 			$($all)*
-		
+
 		$crate::cfg_if_safemode! {
 			$($macros_data)*
 		}
 	};
-	
+
 	[
 		$(#[$($meta:tt)*])*
 		#if_not_safe ( $($all:tt)* )  $($macros_data:tt)*
@@ -96,15 +61,15 @@ macro_rules! cfg_if_safemode {
 					all(feature = "always_check_in_case_debug_assertions", debug_assertions),
 				)
 			)
-		)] 
+		)]
 			$(#[$($meta)*])*
 			$($all)*
-		
+
 		$crate::cfg_if_safemode! {
 			$($macros_data)*
 		}
 	};
-	
+
 	[] => {};
 	[ #if_safe { $($all:tt)* } ] => {
 		{
@@ -123,35 +88,36 @@ macro_rules! cfg_if_safemode {
 // TODO, MANYCOPYCODE
 cfg_if_safemode! {
 	// Unsafe
-	/// Depending on the build flag, a protected version of ManuallyDrop or 
+	/// Depending on the build flag, a protected version of ManuallyDrop or
 	/// an unprotected version of ManuallyDrop with a default trigger.
-	/// 
+	///
 	/// features:
 	/// ```no_run
 	/// if always_safe_manuallydrop | ( always_check_in_case_debug_assertions && debug_assertions ) -> SafeManuallyDrop
 	/// else -> UnsafeManuallyDrop
 	/// ```
-	/// 
-	/// current: 
+	///
+	/// current:
 	/// ```no_run
 	/// UnsafeManuallyDrop
 	/// ```
 	#if_not_safe(pub type AutoSafeManuallyDrop<T, Trig> = crate::beh::r#unsafe::UnsafeManuallyDrop<T, Trig>;)
 
 	// Safe
-	/// Depending on the build flag, a protected version of ManuallyDrop or 
+	/// Depending on the build flag, a protected version of ManuallyDrop or
 	/// an unprotected version of ManuallyDrop with a default trigger.
-	/// 
+	///
 	/// features:
 	/// ```text
 	/// if always_safe_manuallydrop | ( always_check_in_case_debug_assertions && debug_assertions ) -> SafeManuallyDrop
 	/// else -> UnsafeManuallyDrop
 	/// ```
-	/// 
-	/// current: 
+	///
+	/// current:
 	/// ```text
 	/// SafeManuallyDrop
 	/// ```
 	#if_safe(pub type AutoSafeManuallyDrop<T, Trig> = crate::beh::safe::SafeManuallyDrop<T, Trig>;)
 }
 
+pub(crate) use cfg_if_safemode;

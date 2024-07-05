@@ -1,4 +1,3 @@
-
 /*
 	def = if:
 		always_deftrig_panic -> Panic else:
@@ -21,7 +20,6 @@ pub type DefTrigManuallyDrop = crate::core::trig::panic::PanicTrigManuallyDrop;
 #[cfg(all(
 	feature = "support_panic_trig",
 	feature = "always_deftrig_panic",
-	
 	not(feature = "always_deftrig_hookfn"),
 	//not(feature = "always_deftrig_panic"),
 	not(feature = "always_deftrig_abort"),
@@ -34,7 +32,6 @@ pub type DefTrigManuallyDrop = crate::core::trig::panic::PanicTrigManuallyDrop;
 #[cfg(all(
 	feature = "support_abort_trig",
 	feature = "always_deftrig_abort",
-	
 	not(feature = "always_deftrig_hookfn"),
 	not(feature = "always_deftrig_panic"),
 	//not(feature = "always_deftrig_abort"),
@@ -47,7 +44,6 @@ pub type DefTrigManuallyDrop = crate::core::trig::abort::AbortTrigManuallyDrop;
 #[cfg(all(
 	feature = "support_hookfn_trig",
 	feature = "always_deftrig_hookfn",
-	
 	//not(feature = "always_deftrig_hookfn"),
 	not(feature = "always_deftrig_panic"),
 	not(feature = "always_deftrig_abort"),
@@ -60,7 +56,6 @@ pub type DefTrigManuallyDrop = crate::core::trig::hook::HookFnTrigManuallyDrop;
 #[cfg(all(
 	feature = "support_count_trig",
 	feature = "always_deftrig_count",
-	
 	not(feature = "always_deftrig_hookfn"),
 	not(feature = "always_deftrig_panic"),
 	not(feature = "always_deftrig_abort"),
@@ -72,7 +67,6 @@ pub type DefTrigManuallyDrop = crate::core::trig::counter::CounterTrigManuallyDr
 
 #[cfg(all(
 	feature = "always_deftrig_loop",
-	
 	not(feature = "always_deftrig_hookfn"),
 	not(feature = "always_deftrig_panic"),
 	not(feature = "always_deftrig_abort"),
@@ -93,7 +87,8 @@ pub const IS_INVALID_AUTO_DETECT_DEFTRIG: bool = {
 		feature = "always_deftrig_abort",
 		feature = "always_deftrig_count",
 		feature = "always_deftrig_loop"
-	))] {
+	))]
+	{
 		true
 	}
 	#[cfg(not(all( // cargo check --all-features correct!
@@ -102,7 +97,8 @@ pub const IS_INVALID_AUTO_DETECT_DEFTRIG: bool = {
 		feature = "always_deftrig_abort",
 		feature = "always_deftrig_count",
 		feature = "always_deftrig_loop"
-	)))] {
+	)))]
+	{
 		false
 	}
 };
