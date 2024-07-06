@@ -157,7 +157,7 @@ impl StateManuallyDropData {
 	/// (important, the byte is checked anyway, but only in a debug build)
 	#[inline]
 	pub unsafe fn unchecked_from(a: u8) -> Self {
-		extended_debug_assertions!(Self::is_valid_byte(a), true);
+		extended_debug_assertions!(Self::from(a).is_some(), true);
 
 		Self::__unchecked_from(a)
 	}
