@@ -200,7 +200,7 @@ impl StateManuallyDropData {
 }
 
 impl StateManuallyDrop {
-	// why?: This constant is only used for initialization, no one is going to constantly access it for use.
+	// clippy::declare_interior_mutable_const why?: This constant is only used for initialization, no one is going to constantly access it for use.
 	#[allow(clippy::declare_interior_mutable_const)]
 	/// Empty state, needed only for some implementations of const functions.
 	pub const EMPTY_STATE: StateManuallyDrop = StateManuallyDrop::__empty();

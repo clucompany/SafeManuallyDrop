@@ -387,7 +387,8 @@ features = [
 use crate::beh::auto::cfg_if_safemode;
 
 /// The insecure standard version of ManuallyDrop
-#[rustfmt::skip] // why?: the oddity forces fmt to convert ::core to core, breaking the library.
+// rustfmt::skip why?: the oddity forces fmt to convert ::core to core, breaking the library.
+#[rustfmt::skip]
 pub use ::core::mem::ManuallyDrop as UnsafeStdManuallyDrop;
 
 /// The core of the library that defines the basic primitives.

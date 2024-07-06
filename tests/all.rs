@@ -188,8 +188,10 @@ fn test_panic_mode() {
 
 	// Start test panic methods
 	// START POS
-	// why?: this is only needed for internal tests, the logic can be traced, there should be no other meaning here
+	// clippy::type_complexity why?: this is only needed for internal tests, the logic can be traced, there should be no other meaning here
 	#[allow(clippy::type_complexity)]
+	// rustfmt::skip why? rustfmt strangely formats this section of code, spreads it over several lines and adds commas
+	#[rustfmt::skip]
 	let arr_fn: &[(bool, fn(a: Vec<String>))] = &[
 		(true, panic_test_methods::test_combo_drop as _),
 		(true, panic_test_methods::test_drop_and_read as _),
@@ -197,14 +199,8 @@ fn test_panic_mode() {
 		(true, panic_test_methods::test_take_and_drop as _),
 		(true, panic_test_methods::test_drop_and_into_inner as _),
 		(true, panic_test_methods::test_expmanualdrop as _),
-		(
-			false,
-			panic_test_methods::test_expmanualdrop2_ignorepanic as _,
-		),
-		(
-			false,
-			panic_test_methods::test_expmanualdrop3_ignorepanic as _,
-		),
+		(false, panic_test_methods::test_expmanualdrop2_ignorepanic as _),
+		(false, panic_test_methods::test_expmanualdrop3_ignorepanic as _),
 	];
 
 	let mut c_ignore_panic = 0;

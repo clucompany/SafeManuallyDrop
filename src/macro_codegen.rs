@@ -258,7 +258,7 @@ macro_rules! __codegen {
 					/// Takes the value from the ManuallyDrop<T> container out.
 					#[inline(always)]
 					pub fn take(slot: &mut $current_type<T, Trig>) -> T {
-						$crate::__if_codegen! {
+						$crate::macro_codegen::__if_codegen! {
 							if (#$is_safe) {
 								slot.state.to_takemode_or_trig::<Trig>();
 							}
@@ -353,7 +353,7 @@ macro_rules! __codegen {
 					/// Get reference to value.
 					#[inline(always)]
 					pub fn as_value(&self) -> &T {
-						$crate::__if_codegen! {
+						$crate::macro_codegen::__if_codegen! {
 							if (#$is_safe) {
 								self.state.deref_or_trig::<Trig>();
 							}
@@ -367,7 +367,7 @@ macro_rules! __codegen {
 					/// Get a mutable reference to a value.
 					#[inline(always)]
 					pub fn as_mut_value(&mut self) -> &mut T {
-						$crate::__if_codegen! {
+						$crate::macro_codegen::__if_codegen! {
 							if (#$is_safe) {
 								self.state.deref_or_trig::<Trig>();
 							}
@@ -399,7 +399,7 @@ macro_rules! __codegen {
 					/// Manually drops the contained value.
 					#[inline(always)]
 					pub fn drop(slot: &mut $current_type<T, Trig>) {
-						$crate::__if_codegen! {
+						$crate::macro_codegen::__if_codegen! {
 							if (#$is_safe) {
 								slot.state.to_dropmode_or_trig::<Trig>();
 							}
@@ -410,7 +410,7 @@ macro_rules! __codegen {
 						}
 					}
 
-					$crate::__if_codegen! {
+					$crate::macro_codegen::__if_codegen! {
 						if (#$is_safe) {
 							/// Note that the safe ManuallyDrop checks to see if the value is freed when the safe ManuallyDrop struct dies.
 							/// The version of mem::forget is adapted for safe and insecure ManuallyDrop.
@@ -631,7 +631,7 @@ macro_rules! __codegen {
 				PartialEq::eq(value, a)
 			}
 
-			// why?: We make a complete redirect to another trait, even if this function is not implemented, it is better to leave it as it is for now.
+			// clippy::partialeq_ne_impl why?: We make a complete redirect to another trait, even if this function is not implemented, it is better to leave it as it is for now.
 			#[allow(clippy::partialeq_ne_impl)]
 			#[inline]
 			fn ne(&self, a: &Self) -> bool {
@@ -646,7 +646,7 @@ macro_rules! __codegen {
 				PartialEq::eq(self as &T, a)
 			}
 
-			// why?: We make a complete redirect to another trait, even if this function is not implemented, it is better to leave it as it is for now.
+			// clippy::partialeq_ne_impl why?: We make a complete redirect to another trait, even if this function is not implemented, it is better to leave it as it is for now.
 			#[allow(clippy::partialeq_ne_impl)]
 			#[inline]
 			fn ne(&self, a: &T) -> bool {
@@ -660,7 +660,7 @@ macro_rules! __codegen {
 				PartialEq::eq(self as &T, a)
 			}
 
-			// why?: We make a complete redirect to another trait, even if this function is not implemented, it is better to leave it as it is for now.
+			// clippy::partialeq_ne_impl why?: We make a complete redirect to another trait, even if this function is not implemented, it is better to leave it as it is for now.
 			#[allow(clippy::partialeq_ne_impl)]
 			#[inline]
 			fn ne(&self, a: &UnsafeStdManuallyDrop<T>) -> bool {

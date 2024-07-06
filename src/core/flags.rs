@@ -115,7 +115,8 @@ fn test_flag_is_safe_mode() {
 
 	#[cfg(all(feature = "always_check_in_case_debug_assertions", debug_assertions))]
 	{
-		#![allow(clippy::assertions_on_constants)] // why? it's part of this test, it's okay.
+		// clippy::assertions_on_constants why? it's part of this test, it's okay.
+		#![allow(clippy::assertions_on_constants)]
 		assert!(IS_SAFE_MODE);
 
 		is_checked_c = 1;
