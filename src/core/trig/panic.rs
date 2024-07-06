@@ -16,14 +16,10 @@ pub type AutoSafePanicManuallyDrop<T> =
 pub enum PanicTrigManuallyDrop {}
 
 impl TrigManuallyDrop for PanicTrigManuallyDrop {
-	#[inline(always)]
+	// Just a cold version of panic
+	#[inline(never)]
+	#[cold]
 	fn trig_next_invalid_beh(a: Arguments<'_>) -> trig_manuallydrop_returntype!() {
-		#[inline(never)]
-		#[cold]
-		fn __cold_panic(a: Arguments<'_>) -> trig_manuallydrop_returntype!() {
-			panic!("{}", a);
-		}
-
-		__cold_panic(a)
+		panic!("{}", a);
 	}
 }

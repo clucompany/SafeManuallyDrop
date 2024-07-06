@@ -6,7 +6,7 @@ mod _support_istrig_loop {
 	use core::sync::atomic::AtomicBool;
 	use core::sync::atomic::Ordering;
 
-	pub static IS_TRIG_LOOPSAFEMANUALLYDROP: AtomicBool = AtomicBool::new(false);
+	pub static TRIG_LOOP_INVALID_BEHAVIOR: AtomicBool = AtomicBool::new(false);
 
 	pub const DEF_SETORDERING: Ordering = Ordering::SeqCst;
 	pub const DEF_GETORDERING: Ordering = Ordering::Relaxed;
@@ -31,7 +31,6 @@ pub type AutoSafeEmptyLoopManuallyDrop<T> =
 pub enum EmptyLoopTrigManuallyDrop {}
 
 impl TrigManuallyDrop for EmptyLoopTrigManuallyDrop {
-	#[inline]
 	fn trig_next_invalid_beh(_a: Arguments<'_>) -> trig_manuallydrop_returntype!() {
 		#[cfg(feature = "support_istrig_loop")]
 		unsafe {
@@ -54,7 +53,7 @@ impl TrigManuallyDrop for EmptyLoopTrigManuallyDrop {
 #[cfg(feature = "support_istrig_loop")]
 #[inline]
 pub unsafe fn trig_next_invalid_beh() {
-	_support_istrig_loop::IS_TRIG_LOOPSAFEMANUALLYDROP
+	_support_istrig_loop::TRIG_LOOP_INVALID_BEHAVIOR
 		.store(true, _support_istrig_loop::DEF_SETORDERING);
 }
 
@@ -69,7 +68,7 @@ pub const unsafe fn trig_next_invalid_beh() {}
 #[cfg(feature = "support_istrig_loop")]
 #[inline]
 pub fn is_trig_next_invalid_beh() -> bool {
-	_support_istrig_loop::IS_TRIG_LOOPSAFEMANUALLYDROP.load(_support_istrig_loop::DEF_GETORDERING)
+	_support_istrig_loop::TRIG_LOOP_INVALID_BEHAVIOR.load(_support_istrig_loop::DEF_GETORDERING)
 }
 
 /// Check if at least one thread has been globally
@@ -83,7 +82,7 @@ pub const fn is_trig_next_invalid_beh() -> bool {
 
 impl AutoSafeEmptyLoopManuallyDrop<()> {
 	/// Check if at least one thread has been globally looped to avoid undefined behavior.
-	#[inline(always)]
+	#[inline]
 	pub fn is_trig_next_invalid_beh() -> bool {
 		crate::core::trig::r#loop::is_trig_next_invalid_beh()
 	}

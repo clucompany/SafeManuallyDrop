@@ -73,7 +73,7 @@ impl<F> TrigManuallyDrop for F
 where
 	F: Default + FnOnce(Arguments<'_>),
 {
-	#[inline(always)]
+	#[inline]
 	fn trig_next_invalid_beh(a: Arguments<'_>) -> trig_manuallydrop_returntype!() {
 		let function: F = Default::default();
 

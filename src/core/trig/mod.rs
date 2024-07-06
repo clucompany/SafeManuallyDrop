@@ -78,15 +78,15 @@ pub use current_deftrig::DefTrigManuallyDrop;
 
 /// Whether the default behavior autodetection was used for ManuallyDrop.
 #[doc(hidden)]
-#[cfg(any(test, feature = "always_build_flagstable"))]
-#[cfg_attr(docsrs, doc(cfg(feature = "always_build_flagstable")))]
-pub(crate) use current_deftrig::IS_AUTO_DETECT_DEFTRIG;
+#[cfg(any(test, feature = "flags_table"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "flags_table")))]
+pub(crate) use current_deftrig::BUILD_FLAG_AUTO_DETECT_DEFTRIG_ENABLED;
 
 /// The build was done using all-features, the required behavior cannot be determined.
 #[doc(hidden)]
-#[cfg(any(test, feature = "always_build_flagstable"))]
-#[cfg_attr(docsrs, doc(cfg(feature = "always_build_flagstable")))]
-pub(crate) use current_deftrig::IS_INVALID_AUTO_DETECT_DEFTRIG;
+#[cfg(any(test, feature = "flags_table"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "flags_table")))]
+pub(crate) use current_deftrig::BUILD_FLAG_INVALID_AUTO_DETECT_DEFTRIG_ENABLED;
 
 /// The safe version of ManuallyDrop loops the current thread in case of undefined behavior,
 /// and using the `support_istrig_loop` build flag, you can determine whether the

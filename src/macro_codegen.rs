@@ -176,7 +176,7 @@ macro_rules! __codegen {
 
 			/// Forgets value (similar to core::mem::forget), if you need to forget a
 			/// value in ManuallyData use ignore_drop() instead of this function.
-			#[inline(always)]
+			#[inline]
 			pub fn forget(value: T) {
 				let sself = Self::new(value);
 
@@ -241,7 +241,7 @@ macro_rules! __codegen {
 			$crate::macro_codegen::__codegen_compatible_stdapi_ornot! {
 				#if_compatible_stdapi_and_safeapi (#is_always_compatible: $is_always_compatible || ( #is_feature && #is_maybe_compatible: $is_maybe_compatible)) {
 					/// Takes the value from the ManuallyDrop<T> container out.
-					#[inline(always)]
+					#[inline]
 					pub unsafe fn take(slot: &mut $current_type<T, Trig>) -> T {
 						$crate::macro_codegen::__if_codegen! {
 							if (#$is_safe) {
@@ -256,7 +256,7 @@ macro_rules! __codegen {
 					}
 				} else {
 					/// Takes the value from the ManuallyDrop<T> container out.
-					#[inline(always)]
+					#[inline]
 					pub fn take(slot: &mut $current_type<T, Trig>) -> T {
 						$crate::macro_codegen::__if_codegen! {
 							if (#$is_safe) {
@@ -280,7 +280,7 @@ macro_rules! __codegen {
 			$crate::macro_codegen::__codegen_compatible_stdapi_ornot! {
 				#if_compatible_stdapi_and_safeapi (#is_always_compatible: $is_always_compatible || ( #is_feature && #is_maybe_compatible: $is_maybe_compatible)) {
 					/// Get reference to value.
-					#[inline(always)]
+					#[inline]
 					pub unsafe fn as_value(&self) -> &T {
 						$crate::macro_codegen::__if_codegen! {
 							if (#$is_safe) {
@@ -292,7 +292,7 @@ macro_rules! __codegen {
 					}
 
 					/// Get a mutable reference to a value.
-					#[inline(always)]
+					#[inline]
 					pub unsafe fn as_mut_value(&mut self) -> &mut T {
 						$crate::macro_codegen::__if_codegen! {
 							if (#$is_safe) {
@@ -322,7 +322,7 @@ macro_rules! __codegen {
 					}
 
 					/// Manually drops the contained value.
-					#[inline(always)]
+					#[inline]
 					pub unsafe fn drop(slot: &mut $current_type<T, Trig>) {
 						$crate::macro_codegen::__if_codegen! {
 							if (#$is_safe) {
@@ -351,7 +351,7 @@ macro_rules! __codegen {
 					}
 				} else {
 					/// Get reference to value.
-					#[inline(always)]
+					#[inline]
 					pub fn as_value(&self) -> &T {
 						$crate::macro_codegen::__if_codegen! {
 							if (#$is_safe) {
@@ -365,7 +365,7 @@ macro_rules! __codegen {
 					}
 
 					/// Get a mutable reference to a value.
-					#[inline(always)]
+					#[inline]
 					pub fn as_mut_value(&mut self) -> &mut T {
 						$crate::macro_codegen::__if_codegen! {
 							if (#$is_safe) {
@@ -397,7 +397,7 @@ macro_rules! __codegen {
 					}
 
 					/// Manually drops the contained value.
-					#[inline(always)]
+					#[inline]
 					pub fn drop(slot: &mut $current_type<T, Trig>) {
 						$crate::macro_codegen::__if_codegen! {
 							if (#$is_safe) {
@@ -499,7 +499,7 @@ macro_rules! __codegen {
 				} else {
 					/// Get current state
 					/// !!!(Not supported in the unsafe version, always returns None).
-					#[inline(always)]
+					#[inline]
 					pub const fn get_state(&self) -> Option<StateManuallyDropData> {
 						None
 					}
@@ -585,10 +585,9 @@ macro_rules! __codegen {
 		//
 
 		impl<T, Trig> Clone for $current_type<T, Trig> where T: Sized + Clone, Trig: TrigManuallyDrop {
-			#[inline(always)]
+			#[inline]
 			fn clone(&self) -> Self {
-				let ref_value: &T = self.deref();
-				let value = Clone::clone(ref_value);
+				let value = Clone::clone(self as &T);
 
 				Self::new(value)
 			}
@@ -619,24 +618,21 @@ macro_rules! __codegen {
 		impl<T, Trig> Default for $current_type<T, Trig> where T: Sized + Default, Trig: TrigManuallyDrop {
 			#[inline(always)]
 			fn default() -> Self {
-				let value: T = Default::default();
-				Self::new(value)
+				Self::new(Default::default())
 			}
 		}
 
 		impl<T, Trig> PartialEq<Self> for $current_type<T, Trig> where T: PartialEq<T>, Trig: TrigManuallyDrop {
 			#[inline]
 			fn eq(&self, a: &Self) -> bool {
-				let value: &T = self.deref();
-				PartialEq::eq(value, a)
+				PartialEq::eq(self as &T, a)
 			}
 
 			// clippy::partialeq_ne_impl why?: We make a complete redirect to another trait, even if this function is not implemented, it is better to leave it as it is for now.
 			#[allow(clippy::partialeq_ne_impl)]
 			#[inline]
 			fn ne(&self, a: &Self) -> bool {
-				let value: &T = self.deref();
-				PartialEq::ne(value, a)
+				PartialEq::ne(self as &T, a)
 			}
 		}
 
@@ -699,24 +695,21 @@ macro_rules! __codegen {
 		impl<T, Trig> PartialOrd<UnsafeStdManuallyDrop<T>> for $current_type<T, Trig> where T: PartialEq<T> + PartialOrd<T>, Trig: TrigManuallyDrop {
 			#[inline]
 			fn partial_cmp(&self, a: &UnsafeStdManuallyDrop<T>) -> Option<core::cmp::Ordering> {
-				let value: &T = self.deref();
-				PartialOrd::partial_cmp(value, a)
+				PartialOrd::partial_cmp(self as &T, a)
 			}
 		}
 
 		impl<T, Trig> Hash for $current_type<T, Trig> where T: Hash, Trig: TrigManuallyDrop {
 			#[inline]
 			fn hash<H>(&self, a: &mut H) where H: core::hash::Hasher {
-				let value: &T = self.deref();
-				Hash::hash(value, a)
+				Hash::hash(self as &T, a)
 			}
 		}
 
 		impl<T, Trig> Debug for $current_type<T, Trig> where T: Debug, Trig: TrigManuallyDrop {
-			#[inline(always)]
+			#[inline]
 			fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-				let value: &T = self.deref();
-				Debug::fmt(value, f)
+				Debug::fmt(self as &T, f)
 			}
 		}
 

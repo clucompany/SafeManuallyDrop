@@ -322,7 +322,7 @@ features = [
 // and always_safe_manuallydrop options). This flag type only applies to internal
 // library function checks, it is independent of ManuallyDrop and its valid or invalid usage.
 //
-// "allow_fullinternal_debug_assertions",
+// "allow_extended_debug_assertions",
 
 # Preserve unsafe fn flags even if functions are safe
 # (may be required for additional compatibility with the standard API)
@@ -330,7 +330,7 @@ features = [
 
 // Always create a modular table of library flags used in the build.
 // (crate::core::flags)
-"always_build_flagstable",
+"flags_table",
 
 // Trigs:
 //
@@ -395,15 +395,15 @@ pub use ::core::mem::ManuallyDrop as UnsafeStdManuallyDrop;
 pub mod core {
 	pub mod state;
 
-	#[cfg_attr(docsrs, doc(cfg(feature = "always_build_flagstable")))]
-	#[cfg(any(test, feature = "always_build_flagstable"))]
+	#[cfg_attr(docsrs, doc(cfg(feature = "flags_table")))]
+	#[cfg(any(test, feature = "flags_table"))]
 	pub mod flags;
 
-	#[cfg_attr(docsrs, doc(cfg(feature = "always_build_flagstable")))]
-	#[cfg(not(any(test, feature = "always_build_flagstable")))]
+	#[cfg_attr(docsrs, doc(cfg(feature = "flags_table")))]
+	#[cfg(not(any(test, feature = "flags_table")))]
 	pub mod flags {
 		/// Whether a table of build flags to use was created when the library was compiled.
-		pub const IS_BUILD_FLAGSTABLE: bool = false;
+		pub const BUILD_FLAG_TABLE_CREATED: bool = false;
 	}
 
 	/// Implementation of behavior in case of detection of
@@ -414,8 +414,8 @@ pub mod core {
 /// Internal code generation
 mod macro_codegen;
 
-/// Internal fullcodechecks
-mod macro_internalchecks;
+/// Internal extended_debug_assertions
+mod extended_debug_assertions;
 
 /// Safe and insecure implementations of manual memory management.
 pub mod beh {
@@ -526,7 +526,7 @@ pub type ManuallyDrop<T> = AutoSafeManuallyDrop<T>;
 impl AutoSafeManuallyDrop<()> {
 	/// Depending on the build flag, a protected version of ManuallyDrop or
 	/// an unprotected version of ManuallyDrop with a default trigger.
-	pub const IS_SAFE_MODE: bool = cfg_if_safemode! {
+	pub const SAFE_MODE: bool = cfg_if_safemode! {
 		#if_safe() {
 			true
 		}else {
@@ -538,6 +538,6 @@ impl AutoSafeManuallyDrop<()> {
 	/// an unprotected version of ManuallyDrop with a default trigger.
 	#[inline(always)]
 	pub const fn is_safe_mode() -> bool {
-		Self::IS_SAFE_MODE
+		Self::SAFE_MODE
 	}
 }

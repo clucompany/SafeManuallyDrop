@@ -77,10 +77,10 @@ pub type DefTrigManuallyDrop = crate::core::trig::counter::CounterTrigManuallyDr
 pub type DefTrigManuallyDrop = crate::core::trig::r#loop::EmptyLoopTrigManuallyDrop;
 
 /// Whether the default behavior autodetection was used for ManuallyDrop.
-pub const IS_AUTO_DETECT_DEFTRIG: bool = false;
+pub const BUILD_FLAG_AUTO_DETECT_DEFTRIG_ENABLED: bool = false;
 
 /// The build was done using all-features, the required behavior cannot be determined.
-pub const IS_INVALID_AUTO_DETECT_DEFTRIG: bool = {
+pub const BUILD_FLAG_INVALID_AUTO_DETECT_DEFTRIG_ENABLED: bool = {
 	#[cfg(all( // cargo check --all-features correct!
 		feature = "always_deftrig_hookfn",
 		feature = "always_deftrig_panic",

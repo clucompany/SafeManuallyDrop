@@ -309,7 +309,7 @@ features = [
 // and always_safe_manuallydrop options). This flag type only applies to internal 
 // library function checks, it is independent of ManuallyDrop and its valid or invalid usage.
 //
-// "allow_fullinternal_debug_assertions",
+// "allow_extended_debug_assertions",
 
 // Preserve unsafe fn flags even if functions are safe 
 // (may be required for additional compatibility with the standard API)
@@ -317,7 +317,7 @@ features = [
 
 // Always create a modular table of library flags used in the build.
 // (crate::core::flags)
-"always_build_flagstable",
+"flags_table",
 
 // Trigs:
 //

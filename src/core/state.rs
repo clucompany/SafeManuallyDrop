@@ -1,7 +1,7 @@
 //! AtomicStates for ManuallyDrop
 
 use crate::core::trig::TrigManuallyDrop;
-use crate::macro_internalchecks::__fullinternal_debug_assertions;
+use crate::extended_debug_assertions::extended_debug_assertions;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::sync::atomic::AtomicU8;
@@ -106,16 +106,16 @@ impl StateManuallyDropData {
 	/// return the default state.
 	#[inline]
 	pub fn from_or_empty(a: u8) -> Self {
-		Self::is_valid_byte_fn(a, || unsafe { Self::force_from(a) }, Self::empty)
+		Self::validate_with_fns(a, || unsafe { Self::unchecked_from(a) }, Self::empty)
 	}
 
 	/// Create a state from a byte, return None on error.
 	#[inline]
 	pub fn from(a: u8) -> Option<Self> {
-		Self::is_valid_byte_fn(
+		Self::validate_with_fns(
 			a,
 			|| {
-				let sself = unsafe { Self::force_from(a) };
+				let sself = unsafe { Self::unchecked_from(a) };
 
 				Some(sself)
 			},
@@ -125,14 +125,8 @@ impl StateManuallyDropData {
 
 	/// Create default state
 	#[inline(always)]
-	const fn __empty() -> Self {
-		Self::Empty
-	}
-
-	/// Create default state
-	#[inline(always)]
 	pub const fn empty() -> Self {
-		Self::__empty()
+		Self::Empty
 	}
 
 	/// Create default state
@@ -141,9 +135,11 @@ impl StateManuallyDropData {
 		Self::empty()
 	}
 
-	/// Generic Status Byte Validation Function
-	#[inline(always)]
-	pub fn is_valid_byte_fn<R>(a: u8, next: impl FnOnce() -> R, errf: impl FnOnce() -> R) -> R {
+	/// Validates a status byte and executes a function based on the result.
+	///
+	/// Returns the result of the next function if the byte is valid,
+	/// otherwise returns the result of the errf function.
+	pub fn validate_with_fns<R>(a: u8, next: impl FnOnce() -> R, errf: impl FnOnce() -> R) -> R {
 		match a {
 			a if a == Self::Empty as _
 				|| a == Self::TakeModeTrig as _
@@ -157,26 +153,19 @@ impl StateManuallyDropData {
 		}
 	}
 
-	/// General function to check the status byte,
-	/// return false on error, true on success.
+	/// Create a state from a byte quickly and without checks
+	/// (important, the byte is checked anyway, but only in a debug build)
 	#[inline]
-	pub fn is_valid_byte(a: u8) -> bool {
-		Self::is_valid_byte_fn(a, || true, || false)
+	pub unsafe fn unchecked_from(a: u8) -> Self {
+		extended_debug_assertions!(Self::is_valid_byte(a), true);
+
+		Self::__unchecked_from(a)
 	}
 
 	/// Create a state from a byte quickly and without checks
 	/// (important, the byte is checked anyway, but only in a debug build)
-	#[inline(always)]
-	pub unsafe fn force_from(a: u8) -> Self {
-		__fullinternal_debug_assertions!(Self::is_valid_byte(a), true);
-
-		Self::__force_form(a)
-	}
-
-	/// Create a state from a byte quickly and without checks
-	/// (important, the byte is checked anyway, but only in a debug build)
-	#[inline(always)]
-	const fn __force_form(a: u8) -> Self {
+	#[inline]
+	const fn __unchecked_from(a: u8) -> Self {
 		// as u8: It's not really needed here, but it allows me to control code regression in the transmutation functions.
 		#[allow(clippy::unnecessary_cast)]
 		let result: StateManuallyDropData = unsafe {
@@ -187,13 +176,13 @@ impl StateManuallyDropData {
 	}
 
 	/// Determining if a trigger should be executed
-	#[inline(always)]
+	#[inline]
 	pub const fn is_next_trig(&self) -> bool {
 		!matches!(self, StateManuallyDropData::Empty)
 	}
 
 	/// Whether the current state is like a new unused object.
-	#[inline(always)]
+	#[inline]
 	pub const fn is_empty(&self) -> bool {
 		matches!(self, StateManuallyDropData::Empty)
 	}
@@ -206,18 +195,18 @@ impl StateManuallyDrop {
 	pub const EMPTY_STATE: StateManuallyDrop = StateManuallyDrop::__empty();
 
 	/// Create default state
-	#[inline(always)]
+	#[inline]
 	pub fn empty() -> Self {
-		let sself = Self::__empty();
+		let sself = Self::EMPTY_STATE;
 
-		__fullinternal_debug_assertions!(sself.is_empty(), true);
-		__fullinternal_debug_assertions!(sself.is_next_trig(), false);
+		extended_debug_assertions!(sself.is_empty(), true);
+		extended_debug_assertions!(sself.is_next_trig(), false);
 
 		sself
 	}
 
 	/// Create default state
-	#[inline(always)]
+	#[inline]
 	const fn __empty() -> Self {
 		Self {
 			state: AtomicU8::new(StateManuallyDropData::empty() as _),
@@ -225,41 +214,41 @@ impl StateManuallyDrop {
 	}
 
 	/// Whether the current state is like a new unused object.
-	#[inline(always)]
+	#[inline]
 	pub fn is_empty(&self) -> bool {
 		self.read().is_empty()
 	}
 
 	/// Getting the status byte of the current ManuallyDrop.
-	#[inline(always)]
+	#[inline]
 	fn __read_byte(&self) -> u8 {
 		self.state.load(StateManuallyDropData::READ_ORDERING_METHOD)
 	}
 
 	/// Getting the status of the current ManuallyDrop.
-	#[inline(always)]
+	#[inline]
 	pub fn read(&self) -> StateManuallyDropData {
 		let byte = self.__read_byte();
 
-		unsafe { StateManuallyDropData::force_from(byte) }
+		unsafe { StateManuallyDropData::unchecked_from(byte) }
 	}
 
 	/// Quick substitution of the state of the current ManuallyDrop
 	/// (note that the previous state of ManuallyDrop is returned)
-	#[inline(always)]
+	#[inline]
 	fn __force_write(&self, a: StateManuallyDropData) -> StateManuallyDropData {
 		let byte = self
 			.state
 			.swap(a as _, StateManuallyDropData::WRITE_ORDERING_METHOD);
 
-		unsafe { StateManuallyDropData::force_from(byte) }
+		unsafe { StateManuallyDropData::unchecked_from(byte) }
 	}
 
 	/// Resets the ManuallyDrop state to the initial state
 	pub unsafe fn get_and_reset(&self) -> StateManuallyDropData {
 		let old_value = self.__force_write(StateManuallyDropData::Empty);
-		__fullinternal_debug_assertions!(self.is_empty(), true);
-		__fullinternal_debug_assertions!(self.is_next_trig(), false);
+		extended_debug_assertions!(self.is_empty(), true);
+		extended_debug_assertions!(self.is_next_trig(), false);
 
 		old_value
 	}
@@ -268,7 +257,7 @@ impl StateManuallyDrop {
 	/// definer (note that the new state must fire on validation)
 	#[inline]
 	fn __safe_replace_mutstate<Trig: TrigManuallyDrop>(&self, new_state: StateManuallyDropData) {
-		__fullinternal_debug_assertions!(new_state.is_next_trig(), true);
+		extended_debug_assertions!(new_state.is_next_trig(), true);
 
 		let old_state = self.__force_write(new_state);
 
@@ -289,39 +278,39 @@ impl StateManuallyDrop {
 	pub fn to_dropmode_or_trig<Trig: TrigManuallyDrop>(&self) {
 		self.__safe_replace_mutstate::<Trig>(StateManuallyDropData::DropModeTrig);
 
-		__fullinternal_debug_assertions!(self.is_next_trig(), true);
+		extended_debug_assertions!(self.is_next_trig(), true);
 	}
 
 	/// Change the state of ManuallyDrop to the state of the released value,
 	/// or execute the trigger function if the current state was not empty.
-	#[inline(always)]
+	#[inline]
 	pub fn to_takemode_or_trig<Trig: TrigManuallyDrop>(&self) {
 		self.__safe_replace_mutstate::<Trig>(StateManuallyDropData::TakeModeTrig);
 
-		__fullinternal_debug_assertions!(self.is_next_trig(), true);
+		extended_debug_assertions!(self.is_next_trig(), true);
 	}
 
 	/// Change the ManuallyDrop state to ignore freeing the value, or execute the
 	/// trigger function if the current state was not empty.
-	#[inline(always)]
+	#[inline]
 	pub fn to_ignore_trig_when_drop<Trig: TrigManuallyDrop>(&self) {
 		self.__safe_replace_mutstate::<Trig>(StateManuallyDropData::IgnoreTrigWhenDrop);
 
-		__fullinternal_debug_assertions!(self.is_next_trig(), true);
+		extended_debug_assertions!(self.is_next_trig(), true);
 	}
 
 	/// Change the state of ManuallyDrop to the state of the released value, or execute
 	/// the trigger function if the current state was not empty.
-	#[inline(always)]
+	#[inline]
 	pub fn to_intoinnermode_or_trig<Trig: TrigManuallyDrop>(&self) {
 		self.__safe_replace_mutstate::<Trig>(StateManuallyDropData::IntoInnerModeTrig);
 
-		__fullinternal_debug_assertions!(self.is_next_trig(), true);
+		extended_debug_assertions!(self.is_next_trig(), true);
 	}
 
 	/// Check the state of ManuallyDrop for a readable state, or execute a trigger
 	/// function if the current state was not empty.
-	#[inline(always)]
+	#[inline]
 	pub fn deref_or_trig<Trig: TrigManuallyDrop>(&self) {
 		let a_state = self.read();
 
@@ -358,7 +347,7 @@ impl StateManuallyDrop {
 	}
 
 	/// Determining if a trigger should be executed
-	#[inline(always)]
+	#[inline]
 	pub fn is_next_trig(&self) -> bool {
 		self.read().is_next_trig()
 	}

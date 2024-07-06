@@ -8,7 +8,7 @@ edition = "2021"
 license = "Apache-2.0"
 readme = "README.md"
 
-description = "A safe version of ManuallyDrop with various features and options to track undefined behavior when working with ManuallyDrop."
+description = "ManuallyDrop Safe: A robust version of ManuallyDrop with features and options for tracking undefined behavior."
 keywords = ["safe_manually_drop", "safemanuallydrop", "SafeManuallyDrop", "no_std", "clucompany"]
 categories = ["development-tools", "development-tools::testing", "development-tools::debugging", "api-bindings", "memory-management"]
 
@@ -41,7 +41,7 @@ default = [
 	# and always_safe_manuallydrop options). This flag type only applies to internal 
 	# library function checks, it is independent of ManuallyDrop and its valid or invalid usage.
 	#
-	# "allow_fullinternal_debug_assertions",
+	# "allow_extended_debug_assertions",
 	
 	# Preserve unsafe fn flags even if functions are safe 
 	# (may be required for additional compatibility with the standard API)
@@ -49,7 +49,7 @@ default = [
 	
 	# Always create a modular table of library flags used in the build.
 	# (crate::core::flags)
-	"always_build_flagstable",
+	"flags_table",
 	
 	# Trigs:
 	#
@@ -109,11 +109,11 @@ always_safe_manuallydrop = []
 # the debug_assertions flag is enabled (does not depend on the always_check_in_case_debug_assertions 
 # and always_safe_manuallydrop options). This flag type only applies to internal 
 # library function checks, it is independent of ManuallyDrop and its valid or invalid usage.
-allow_fullinternal_debug_assertions = []
+allow_extended_debug_assertions = []
 
 # Always create a modular table of library flags used in the build.
 # (crate::core::flags)
-always_build_flagstable = []
+flags_table = []
 
 support_hookfn_trig = []
 # Support for CounterManuallyDrop, in case of undefined behavior, 

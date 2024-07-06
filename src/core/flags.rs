@@ -2,14 +2,14 @@
 
 /// Whether a table of build flags to use was created
 /// when the library was compiled.
-pub const IS_BUILD_FLAGSTABLE: bool = true;
+pub const BUILD_FLAG_TABLE_CREATED: bool = true;
 
 /// Depending on the build flag, a protected version of ManuallyDrop or
 /// an unprotected version of ManuallyDrop with a default trigger.
-pub const IS_SAFE_MODE: bool = crate::ManuallyDrop::is_safe_mode();
+pub const SAFE_MANUALLYDROP_ENABLED: bool = crate::ManuallyDrop::is_safe_mode();
 
 /// Whether the library build flag was used to support panic_trig.
-pub const IS_SUPPORT_PANIC_TRIG: bool = {
+pub const BUILD_FLAG_PANIC_TRIGGER_ENABLED: bool = {
 	#[cfg(feature = "support_panic_trig")]
 	{
 		true
@@ -22,7 +22,7 @@ pub const IS_SUPPORT_PANIC_TRIG: bool = {
 };
 
 /// Whether the library build flag was used to support hookfn_trig.
-pub const IS_SUPPORT_HOOKFN_TRIG: bool = {
+pub const BUILD_FLAG_HOOKFN_TRIGGER_ENABLED: bool = {
 	#[cfg(feature = "support_hookfn_trig")]
 	{
 		true
@@ -35,7 +35,7 @@ pub const IS_SUPPORT_HOOKFN_TRIG: bool = {
 };
 
 /// Whether the library build flag was used to support abort_trig.
-pub const IS_SUPPORT_ABORT_TRIG: bool = {
+pub const BUILD_FLAG_ABORT_TRIGGER_ENABLED: bool = {
 	#[cfg(feature = "support_abort_trig")]
 	{
 		true
@@ -48,7 +48,7 @@ pub const IS_SUPPORT_ABORT_TRIG: bool = {
 };
 
 /// Whether the library build flag was used to support count_trig.
-pub const IS_SUPPORT_COUNT_TRIG: bool = {
+pub const BUILD_FLAG_COUNT_TRIGGER_ENABLED: bool = {
 	#[cfg(feature = "support_count_trig")]
 	{
 		true
@@ -61,10 +61,10 @@ pub const IS_SUPPORT_COUNT_TRIG: bool = {
 };
 
 /// Whether the library build flag was used to support loop_trig.
-pub const IS_SUPPORT_LOOP_TRIG: bool = true;
+pub const BUILD_FLAG_LOOP_TRIGGER_ENABLED: bool = true;
 
 /// Ability to determine if an empty loop trigger has been executed.
-pub const IS_SUPPORT_LOOP_IS_TRIG: bool = {
+pub const BUILD_FLAG_LOOP_IS_TRIGGER_ENABLED: bool = {
 	#[cfg(feature = "support_istrig_loop")]
 	{
 		true
@@ -79,24 +79,26 @@ pub const IS_SUPPORT_LOOP_IS_TRIG: bool = {
 /// Enable additional internal checks of the SafeManuallyDrop library when
 /// the debug_assertions flag is enabled (does not depend on the always_check_in_case_debug_assertions
 /// and always_safe_manuallydrop options).
-pub const IS_FULLINTERNAL_DEBUG_ASSERTIONS: bool = {
-	#[cfg(feature = "allow_fullinternal_debug_assertions")]
+pub const BUILD_FLAG_EXTENDED_DEBUG_ASSERTIONS_ENABLED: bool = {
+	#[cfg(feature = "allow_extended_debug_assertions")]
 	{
 		true
 	}
 
-	#[cfg(not(feature = "allow_fullinternal_debug_assertions"))]
+	#[cfg(not(feature = "allow_extended_debug_assertions"))]
 	{
 		false
 	}
 };
 
 /// Whether the default behavior autodetection was used for ManuallyDrop.
-pub const IS_AUTO_DETECT_DEFTRIG: bool = crate::core::trig::IS_AUTO_DETECT_DEFTRIG;
+pub const BUILD_FLAG_AUTO_DETECT_DEFTRIG_ENABLED: bool =
+	crate::core::trig::BUILD_FLAG_AUTO_DETECT_DEFTRIG_ENABLED;
 
 /// If the build was done using "all functions" (cargo test/doc/build --all-features), the required behavior in a safe mandrop cannot be determined,
 /// if this flag is active, EmptyLoopTrigManuallyDrop will be used.
-pub const IS_INVALID_AUTO_DETECT_DEFTRIG: bool = crate::core::trig::IS_INVALID_AUTO_DETECT_DEFTRIG;
+pub const BUILD_FLAG_INVALID_AUTO_DETECT_DEFTRIG_ENABLED: bool =
+	crate::core::trig::BUILD_FLAG_INVALID_AUTO_DETECT_DEFTRIG_ENABLED;
 
 #[cfg(test)]
 #[test]
@@ -106,7 +108,7 @@ fn test_flag_is_safe_mode() {
 
 	#[cfg(feature = "always_safe_manuallydrop")]
 	{
-		assert_eq!(IS_SAFE_MODE, true);
+		assert_eq!(SAFE_MANUALLYDROP_ENABLED, true);
 
 		//#[allow(unused_assignments)] // error[E0658]: attributes on expressions are experimental
 		is_checked_c = 1;
@@ -117,7 +119,7 @@ fn test_flag_is_safe_mode() {
 	{
 		// clippy::assertions_on_constants why? it's part of this test, it's okay.
 		#![allow(clippy::assertions_on_constants)]
-		assert!(IS_SAFE_MODE);
+		assert!(SAFE_MANUALLYDROP_ENABLED);
 
 		is_checked_c = 1;
 	}
@@ -127,7 +129,7 @@ fn test_flag_is_safe_mode() {
 		feature = "always_safe_manuallydrop"
 	)))]
 	{
-		assert_eq!(IS_SAFE_MODE, false);
+		assert_eq!(SAFE_MANUALLYDROP_ENABLED, false);
 
 		is_checked_c = is_checked_c + 1;
 	}

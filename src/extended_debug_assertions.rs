@@ -23,8 +23,8 @@
 /// more importantly, only in safe code!
 ///
 /// Source: rust std debug_assert.
-#[cfg(all(feature = "allow_fullinternal_debug_assertions", debug_assertions))]
-macro_rules! __fullinternal_debug_assertions {
+#[cfg(all(feature = "allow_extended_debug_assertions", debug_assertions))]
+macro_rules! extended_debug_assertions {
 	( $($all:tt)* ) => {
 		assert_eq!($($all)*)
 	}
@@ -55,9 +55,9 @@ macro_rules! __fullinternal_debug_assertions {
 /// more importantly, only in safe code!
 ///
 /// Source: rust std debug_assert.
-#[cfg(not(all(feature = "allow_fullinternal_debug_assertions", debug_assertions)))]
-macro_rules! __fullinternal_debug_assertions {
+#[cfg(not(all(feature = "allow_extended_debug_assertions", debug_assertions)))]
+macro_rules! extended_debug_assertions {
 	( $($all:tt)* ) => {};
 }
 
-pub(crate) use __fullinternal_debug_assertions;
+pub(crate) use extended_debug_assertions;
